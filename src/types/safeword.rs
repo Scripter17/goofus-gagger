@@ -1,36 +1,44 @@
 use std::collections::HashSet;
 
 use serde::{Serialize, Deserialize};
-use serenity::model::id::ChannelId;
+use serenity::model::id::{GuildId, ChannelId};
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SafewordConfig {
     pub global: bool,
+    pub servers: HashSet<GuildId>,
     pub channels: HashSet<ChannelId>
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, poise::ChoiceParameter)]
 pub enum SafewordLocation {
     Global,
-    Here
+    Server,
+    Channel
+}
+
+pub enum SafewordError {
+    NotInServer
 }
 
 impl SafewordConfig {
-    pub fn add_safeword(&mut self, location: SafewordLocation, channel: ChannelId) -> bool {
-        match location {
+    pub fn add_safeword(&mut self, location: SafewordLocation, channel: ChannelId, server: Option<GuildId>) -> Result<bool, SafewordError> {
+        Ok(match location {
             SafewordLocation::Global => {let ret = !self.global; self.global = true; ret},
-            SafewordLocation::Here => self.channels.insert(channel)
-        }
+            SafewordLocation::Server => self.servers.insert(server.ok_or(SafewordError::NotInServer)?),
+            SafewordLocation::Channel => self.channels.insert(channel)
+        })
     }
 
-    pub fn remove_safeword(&mut self, location: SafewordLocation, channel: ChannelId) -> bool {
-        match location {
+    pub fn remove_safeword(&mut self, location: SafewordLocation, channel: ChannelId, server: Option<GuildId>) -> Result<bool, SafewordError> {
+        Ok(match location {
             SafewordLocation::Global => {let ret = self.global; self.global=false; ret},
-            SafewordLocation::Here => self.channels.remove(&channel)
-        }
+            SafewordLocation::Server => self.servers.remove(&server.ok_or(SafewordError::NotInServer)?),
+            SafewordLocation::Channel => self.channels.remove(&channel)
+        })
     }
 
-    pub fn is_safewording(&self, channel: ChannelId) -> bool {
-        self.global || self.channels.contains(&channel)
+    pub fn is_safewording(&self, channel: ChannelId, server: Option<GuildId>) -> bool {
+        self.global || server.is_some_and(|server| self.servers.contains(&server)) || self.channels.contains(&channel)
     }
 }

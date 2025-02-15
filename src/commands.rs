@@ -202,13 +202,20 @@ pub async fn safeword(
     #[description = "Where to apply the safeword for."]
     r#where: SafewordLocation
 ) -> Result<(), serenity::Error> {
-    ctx.data().config.write().unwrap().gagees.entry(ctx.author().id).or_insert_with(|| Gagee::default_for(ctx.author().id)).safeword.add_safeword(r#where.clone(), ctx.channel_id());
+    let result = ctx.data().config.write().unwrap().gagees.entry(ctx.author().id).or_insert_with(|| Gagee::default_for(ctx.author().id)).safeword.add_safeword(r#where.clone(), ctx.channel_id(), ctx.guild_id());
 
     ctx.send(CreateReply {
         allowed_mentions: Some(Default::default()),
-        content: Some(match r#where {
-            SafewordLocation::Global => "Enabled the safeword here. Note that per-channel safewords are still in effect",
-            SafewordLocation::Here   => "Enabled the safeword here. Note that the global safeword is still in effect"
+        content: Some(match (r#where, result) {
+            (SafewordLocation::Global , Ok(false))                       => "The safeword was already enabled globally",
+            (SafewordLocation::Global , Ok(true ))                       => "Enabled the safeword globally. Note that the other safewords are still in effect",
+            (SafewordLocation::Global , Err(SafewordError::NotInServer)) => "Can't enable a per-server safeword outside of a server",
+            (SafewordLocation::Server , Ok(false))                       => "The safeword was already enabled in this server",
+            (SafewordLocation::Server , Ok(true ))                       => "Enabled the safeword in this server. Note that the other safewords are still in effect",
+            (SafewordLocation::Server , Err(SafewordError::NotInServer)) => "Can't enable a per-server safeword outside of a server",
+            (SafewordLocation::Channel, Ok(false))                       => "The safeword was already enabled in this channel",
+            (SafewordLocation::Channel, Ok(true ))                       => "Enabled the safeword in this channel. Note that the other safewords are still in effect",
+            (SafewordLocation::Channel, Err(SafewordError::NotInServer)) => "Can't enable a per-server safeword outside of a server"
         }.to_string()),
         ..Default::default()
     }).await.unwrap();
@@ -222,13 +229,20 @@ pub async fn unsafeword(
     #[description = "Where to revoke the safeword for."]
     r#where: SafewordLocation
 ) -> Result<(), serenity::Error> {
-    ctx.data().config.write().unwrap().gagees.entry(ctx.author().id).or_insert_with(|| Gagee::default_for(ctx.author().id)).safeword.remove_safeword(r#where.clone(), ctx.channel_id());
+    let result = ctx.data().config.write().unwrap().gagees.entry(ctx.author().id).or_insert_with(|| Gagee::default_for(ctx.author().id)).safeword.remove_safeword(r#where.clone(), ctx.channel_id(), ctx.guild_id());
 
     ctx.send(CreateReply {
         allowed_mentions: Some(Default::default()),
-        content: Some(match r#where {
-            SafewordLocation::Global => "Disabled the safeword here. Note that per-channel safewords are still in effect",
-            SafewordLocation::Here   => "Disabled the safeword here. Note that the global safeword is still in effect"
+        content: Some(match (r#where, result) {
+            (SafewordLocation::Global , Ok(false))                       => "The safeword was already disabledglobally",
+            (SafewordLocation::Global , Ok(true ))                       => "Disabled the safeword globally. Note that the other safewords are still in effect",
+            (SafewordLocation::Global , Err(SafewordError::NotInServer)) => "Can't disable a per-server safeword outside of a server",
+            (SafewordLocation::Server , Ok(false))                       => "The safeword was already disabledin this server",
+            (SafewordLocation::Server , Ok(true ))                       => "Disabled the safeword in this server. Note that the other safewords are still in effect",
+            (SafewordLocation::Server , Err(SafewordError::NotInServer)) => "Can't disable a per-server safeword outside of a server",
+            (SafewordLocation::Channel, Ok(false))                       => "The safeword was already disabledin this channel",
+            (SafewordLocation::Channel, Ok(true ))                       => "Disabled the safeword in this channel. Note that the other safewords are still in effect",
+            (SafewordLocation::Channel, Err(SafewordError::NotInServer)) => "Can't disable a per-server safeword outside of a server"
         }.to_string()),
         ..Default::default()
     }).await.unwrap();

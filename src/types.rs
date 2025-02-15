@@ -38,7 +38,7 @@ pub struct Config {
 
 impl Config {
     pub fn should_gag(&self, msg: &Message) -> bool {
-        self.gagees.get(&msg.author.id).is_some_and(|gagee| !gagee.safeword.is_safewording(msg.channel_id) && gagee.gags.get(&msg.channel_id).is_some_and(|gag| gag.until.is_forever_or(|until| &msg.timestamp < until)))
+        self.gagees.get(&msg.author.id).is_some_and(|gagee| !gagee.safeword.is_safewording(msg.channel_id, msg.guild_id) && gagee.gags.get(&msg.channel_id).is_some_and(|gag| gag.until.is_forever_or(|until| &msg.timestamp < until)))
     }
 
     pub fn gag(&mut self, gagee: UserId,  member: &Member, channel: ChannelId, gag: Gag) -> Result<(), GagError> {

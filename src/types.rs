@@ -9,10 +9,14 @@ use serde::{Serialize, Deserialize};
 use serenity::model::{channel::Message, id::{ChannelId, UserId, GuildId}, guild::Member};
 use serde_with::serde_as;
 
+use crate::util::*;
+
 mod gag;
 pub use gag::*;
 mod trust;
 pub use trust::*;
+mod safeword;
+pub use safeword::*;
 
 pub struct State {
     pub config: RwLock<Config>,
@@ -34,7 +38,7 @@ pub struct Config {
 
 impl Config {
     pub fn should_gag(&self, msg: &Message) -> bool {
-        self.gagees.get(&msg.author.id).is_some_and(|gagee| gagee.gags.get(&msg.channel_id).is_some_and(|gag| gag.until.is_forever_or(|until| &msg.timestamp < until)))
+        self.gagees.get(&msg.author.id).is_some_and(|gagee| !gagee.safeword.is_safewording(msg.channel_id) && gagee.gags.get(&msg.channel_id).is_some_and(|gag| gag.until.is_forever_or(|until| &msg.timestamp < until)))
     }
 
     pub fn gag(&mut self, gagee: UserId,  member: &Member, channel: ChannelId, gag: Gag) -> Result<(), GagError> {
@@ -55,10 +59,12 @@ impl Config {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Gagee {
     pub id: UserId,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub trusts: GageeTrust,
-    #[serde(default)]
-    pub gags: HashMap<ChannelId, Gag>
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub gags: HashMap<ChannelId, Gag>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub safeword: SafewordConfig
 }
 
 impl Gagee {
@@ -66,7 +72,8 @@ impl Gagee {
         Self {
             id,
             trusts: Default::default(),
-            gags: Default::default()
+            gags: Default::default(),
+            safeword: Default::default()
         }
     }
 }

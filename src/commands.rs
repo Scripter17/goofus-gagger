@@ -195,3 +195,43 @@ pub async fn import(
 
     Ok(())
 }
+
+#[poise::command(track_edits, slash_command)]
+pub async fn safeword(
+    ctx: Context<'_, State, serenity::Error>,
+    #[description = "Where to apply the safeword for."]
+    r#where: SafewordLocation
+) -> Result<(), serenity::Error> {
+    ctx.data().config.write().unwrap().gagees.entry(ctx.author().id).or_insert_with(|| Gagee::default_for(ctx.author().id)).safeword.add_safeword(r#where.clone(), ctx.channel_id());
+
+    ctx.send(CreateReply {
+        allowed_mentions: Some(Default::default()),
+        content: Some(match r#where {
+            SafewordLocation::Global => "Enabled the safeword here. Note that per-channel safewords are still in effect",
+            SafewordLocation::Here   => "Enabled the safeword here. Note that the global safeword is still in effect"
+        }.to_string()),
+        ..Default::default()
+    }).await.unwrap();
+
+    Ok(())
+}
+
+#[poise::command(track_edits, slash_command)]
+pub async fn unsafeword(
+    ctx: Context<'_, State, serenity::Error>,
+    #[description = "Where to revoke the safeword for."]
+    r#where: SafewordLocation
+) -> Result<(), serenity::Error> {
+    ctx.data().config.write().unwrap().gagees.entry(ctx.author().id).or_insert_with(|| Gagee::default_for(ctx.author().id)).safeword.remove_safeword(r#where.clone(), ctx.channel_id());
+
+    ctx.send(CreateReply {
+        allowed_mentions: Some(Default::default()),
+        content: Some(match r#where {
+            SafewordLocation::Global => "Disabled the safeword here. Note that per-channel safewords are still in effect",
+            SafewordLocation::Here   => "Disabled the safeword here. Note that the global safeword is still in effect"
+        }.to_string()),
+        ..Default::default()
+    }).await.unwrap();
+
+    Ok(())
+}

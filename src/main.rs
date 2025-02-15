@@ -50,7 +50,12 @@ async fn main() {
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![commands::gag(), commands::ungag(), commands::set_trust_for_user(), commands::set_trust_for_member(), commands::set_trust_for_server(), commands::export(), commands::import()],
+            commands: vec![
+                commands::gag(), commands::ungag(),
+                commands::set_trust_for_user(), commands::set_trust_for_member(), commands::set_trust_for_server(),
+                commands::safeword(), commands::unsafeword(),
+                commands::export(), commands::import()
+            ],
             event_handler: gag_handler,
             post_command: |ctx| Box::pin(async move {ctx.data().commit()}),
             ..Default::default()

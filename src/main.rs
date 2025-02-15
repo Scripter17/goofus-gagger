@@ -18,9 +18,12 @@ use types::*;
 #[derive(Parser)]
 pub struct Args {
     #[arg(long, default_value = "config.json")]
-    config: PathBuf
+    pub config: PathBuf,
+    #[arg(long)]
+    pub just_test_config: bool
 }
 
+/// Gag a message if its user has a gag and no safeword active.
 fn gag_handler<'a>(ctx: &'a Context, event: &'a FullEvent, _: poise::FrameworkContext<'a, State, serenity::Error>, state: &'a State) -> BoxFuture<'a, Result<(), serenity::Error>> {
     Box::pin(async move {
         if let FullEvent::Message{new_message: msg} = event {
@@ -47,6 +50,8 @@ async fn main() {
         config: RwLock::new(serde_json::from_str(&read_to_string(&args.config).expect("The config to exist")).expect("The config to be valid")),
         path: args.config
     };
+
+    if args.just_test_config {return;}
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {

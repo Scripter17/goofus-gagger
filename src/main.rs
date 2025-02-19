@@ -27,11 +27,11 @@ pub struct Args {
 fn gag_handler<'a>(ctx: &'a Context, event: &'a FullEvent, _: poise::FrameworkContext<'a, State, serenity::Error>, state: &'a State) -> BoxFuture<'a, Result<(), serenity::Error>> {
     Box::pin(async move {
         if let FullEvent::Message{new_message: msg} = event {
-            if state.config.read().unwrap().should_gag(msg) {
+            if state.config.read().expect("No panics").should_gag(msg) {
                 msg.channel_id.send_message(
                     &ctx.http,
                     CreateMessage::new().allowed_mentions(Default::default()).content(format!("{}: {}",
-                        msg.member(&ctx.http).await.unwrap(),
+                        msg.author,
                         crate::gag::gag(&msg.content)
                     ))
                 ).await?;
@@ -57,12 +57,14 @@ async fn main() {
         .options(poise::FrameworkOptions {
             commands: vec![
                 commands::gag(), commands::ungag(),
-                commands::set_trust_for_user(), commands::set_trust_for_member(), commands::set_trust_for_server(),
+                commands::trust(),
                 commands::safeword(), commands::unsafeword(),
-                commands::export(), commands::import()
+                commands::export(), commands::import(),
+                commands::status()
             ],
             event_handler: gag_handler,
-            post_command: |ctx| Box::pin(async move {ctx.data().commit()}),
+            post_command: |ctx| Box::pin(async move {ctx.data().write_to_file().expect("Writing the Config to a file to work")}),
+            allowed_mentions: Some(Default::default()),
             ..Default::default()
         })
         .setup(|ctx, _, framework| {

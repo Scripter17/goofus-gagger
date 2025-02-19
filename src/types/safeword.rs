@@ -4,7 +4,7 @@ use serde::{Serialize, Deserialize};
 use serenity::model::id::{GuildId, ChannelId};
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
-pub struct SafewordConfig {
+pub struct Safewords {
     pub global: bool,
     pub servers: HashSet<GuildId>,
     pub channels: HashSet<ChannelId>
@@ -21,7 +21,7 @@ pub enum SafewordError {
     NotInServer
 }
 
-impl SafewordConfig {
+impl Safewords {
     pub fn add_safeword(&mut self, location: SafewordLocation, channel: ChannelId, server: Option<GuildId>) -> Result<bool, SafewordError> {
         Ok(match location {
             SafewordLocation::Global => {let ret = !self.global; self.global = true; ret},

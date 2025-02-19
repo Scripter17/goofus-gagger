@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use serde::{Serialize, Deserialize};
 use serenity::all::Timestamp;
 
@@ -6,7 +8,7 @@ use serenity::all::Timestamp;
 pub struct Gag {
     /// The point in time where the gag no longer applies.
     pub until: GagUntil,
-    /// If [`true`], the [`Gagee`] can't ungag themself and anyone trying to ungag them needs [`Trust::untie`] consent.
+    /// If [`true`], the [`Gaggee`] can't ungag themself and anyone trying to ungag them needs [`Trust::untie`] consent.
     #[serde(default)]
     pub tie: bool
 }
@@ -26,6 +28,24 @@ impl GagUntil {
         match self {
             GagUntil::Time(x) => f(x),
             GagUntil::Forever => true
+        }
+    }
+}
+
+impl PartialEq<Timestamp> for GagUntil {
+    fn eq(&self, other: &Timestamp) -> bool {
+        match self {
+            Self::Time(x) => x == other,
+            Self::Forever => false
+        }
+    }
+}
+
+impl PartialOrd<Timestamp> for GagUntil {
+    fn partial_cmp(&self, other: &Timestamp) -> Option<Ordering> {
+        match self {
+            Self::Time(x) => x.partial_cmp(other),
+            Self::Forever => Some(Ordering::Less)
         }
     }
 }

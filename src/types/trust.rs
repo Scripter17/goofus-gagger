@@ -3,33 +3,20 @@ use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use serenity::model::id::{UserId, GuildId};
 
-use crate::util::*;
+use crate::types::*;
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(transparent)]
-pub struct MemberId(pub String);
-
-impl From<(GuildId, UserId)> for MemberId {
-    fn from(value: (GuildId, UserId)) -> Self {
-        Self(format!("{},{}", value.0, value.1))
-    }
-}
-
-/// The trusts a [`Gagee`] has.
+/// The trusts a [`Gaggee`] has.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
-pub struct GageeTrust {
-    /// The default trust level, overridden by [`Self::per_guild`], [`Self::per_user`], and [`Self::per_member`].
-    #[serde(default, skip_serializing_if = "is_default")]
-    pub default: Trust,
-    /// the trust the gagee has in servers.
+pub struct GaggeeTrust {
+    /// the trust the gaggee has in servers.
     #[serde(default, skip_serializing_if = "is_default")]
     pub per_guild: HashMap<GuildId, TrustDiff>,
-    /// The trust the gagee has in users.
+    /// The trust the gaggee has in users.
     #[serde(default, skip_serializing_if = "is_default")]
     pub per_user: HashMap<UserId, TrustDiff>,
-    /// The trust the gagee has in members.
+    /// The trust the gaggee has in members.
     #[serde(default, skip_serializing_if = "is_default")]
-    pub per_member: HashMap<MemberId, TrustDiff>,
+    pub per_member: HashMap<MemberId, TrustDiff>
 }
 
 /// The trust levels a server member has.
@@ -47,6 +34,17 @@ pub struct Trust {
     /// Can untie.
     #[serde(default, skip_serializing_if = "is_default")]
     pub untie: bool
+}
+
+impl Trust {
+    pub fn for_self() -> Self {
+        Self {
+            gag: true,
+            ungag: true,
+            tie: true,
+            untie: false
+        }
+    }
 }
 
 /// The overrides to apply to [`Trust`]s.

@@ -15,8 +15,15 @@ pub struct Gaggee {
     pub gags: HashMap<ChannelId, Gag>,
     /// The safewords the gaggee is using.
     #[serde(default, skip_serializing_if = "is_default")]
-    pub safewords: Safewords
+    pub safewords: Safewords,
+    /// The max length a message can be before it no longer gets gagged.
+    ///
+    /// Fixes the issue of typing a long message just for it to get deleted.
+    #[serde(default = "get_128_usize")]
+    pub max_message_length_to_gag: usize
 }
+
+fn get_128_usize() -> usize {128}
 
 /// The set of errors trying to gag someone can return.
 pub enum GagError {
@@ -47,7 +54,8 @@ impl Gaggee {
             id,
             trust: Default::default(),
             gags: Default::default(),
-            safewords: Default::default()
+            safewords: Default::default(),
+            max_message_length_to_gag: 128
         }
     }
 

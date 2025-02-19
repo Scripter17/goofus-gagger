@@ -3,7 +3,7 @@ use std::sync::RwLock;
 use std::path::PathBuf;
 
 use serenity::prelude::*;
-use serenity::all::*;
+use serenity::client::FullEvent;
 use poise::BoxFuture;
 use serenity::builder::CreateMessage;
 use clap::Parser;
@@ -27,15 +27,29 @@ pub struct Args {
 fn gag_handler<'a>(ctx: &'a Context, event: &'a FullEvent, _: poise::FrameworkContext<'a, State, serenity::Error>, state: &'a State) -> BoxFuture<'a, Result<(), serenity::Error>> {
     Box::pin(async move {
         if let FullEvent::Message{new_message: msg} = event {
-            if state.config.read().expect("No panics").should_gag(msg) {
-                msg.channel_id.send_message(
-                    &ctx.http,
-                    CreateMessage::new().allowed_mentions(Default::default()).content(format!("{}: {}",
-                        msg.author,
-                        crate::gag::gag(&msg.content)
-                    ))
-                ).await?;
-                msg.delete(&ctx.http).await?;
+            let x = state.config.read().expect("No panics").should_do(msg);
+            match x {
+                MessageAction::Gag => {
+                    msg.channel_id.send_message(
+                        &ctx.http,
+                        CreateMessage::new().allowed_mentions(Default::default()).content(format!("{}: {}",
+                            msg.author,
+                            crate::gag::gag(&msg.content)
+                        ))
+                    ).await?;
+                    msg.delete(&ctx.http).await?;
+                },
+                MessageAction::WarnTooLong(max_length) => {
+                    msg.reply(
+                        &ctx.http,
+                        format!(
+                            "While you  has a gag active here, this message is {} bytes long while the maximum message length to gag is {} bytes\nYou can use `/set_max_message_length_to_gag` to increase this",
+                            msg.content.len(),
+                            max_length
+                        )
+                    ).await?;
+                },
+                MessageAction::Nothing => {}
             }
         }
         Ok(())
@@ -60,7 +74,8 @@ async fn main() {
                 commands::trust(),
                 commands::safeword(), commands::unsafeword(),
                 commands::export(), commands::import(),
-                commands::status()
+                commands::status(),
+                commands::set_max_message_length_to_gag()
             ],
             event_handler: gag_handler,
             post_command: |ctx| Box::pin(async move {ctx.data().write_to_file().expect("Writing the Config to a file to work")}),

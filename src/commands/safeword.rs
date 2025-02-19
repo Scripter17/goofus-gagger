@@ -17,13 +17,13 @@ pub async fn safeword(
 
     ctx.say(match (r#where, result) {
         (SafewordLocation::Global , Ok(false))                       => "The global safeword was already enabled",
-        (SafewordLocation::Global , Ok(true ))                       => "Enabled the global safeword",
+        (SafewordLocation::Global , Ok(true ))                       => "Enabled the global safeword\nNote that gags will continue to apply once this safeword (and all other relevant safewords) are disabled",
         (SafewordLocation::Global , Err(SafewordError::NotInServer)) => "Can't enable a per-server safeword outside of a server",
         (SafewordLocation::Server , Ok(false))                       => "The safeword was already enabled in this server",
-        (SafewordLocation::Server , Ok(true ))                       => "Enabled the safeword in this server",
+        (SafewordLocation::Server , Ok(true ))                       => "Enabled the safeword in this server\nNote that gags will continue to apply once this safeword (and all other relevant safewords) are disabled",
         (SafewordLocation::Server , Err(SafewordError::NotInServer)) => "Can't enable a per-server safeword outside of a server",
         (SafewordLocation::Channel, Ok(false))                       => "The safeword was already enabled in this channel",
-        (SafewordLocation::Channel, Ok(true ))                       => "Enabled the safeword in this channel",
+        (SafewordLocation::Channel, Ok(true ))                       => "Enabled the safeword in this channel\nNote that gags will continue to apply once this safeword (and all other relevant safewords) are disabled",
         (SafewordLocation::Channel, Err(SafewordError::NotInServer)) => "Can't enable a per-server safeword outside of a server"
     }).await?;
 
@@ -41,13 +41,13 @@ pub async fn unsafeword(
 
     ctx.say(match (r#where, result) {
         (SafewordLocation::Global , Ok(false))                       => "The global safeword was already disabled",
-        (SafewordLocation::Global , Ok(true ))                       => "Disabled the global safeword",
+        (SafewordLocation::Global , Ok(true ))                       => "Disabled the global safeword.\nNote that any gags applied before or during this safeword (and all other relevant safewords) now apply again",
         (SafewordLocation::Global , Err(SafewordError::NotInServer)) => "Can't disable a per-server safeword outside of a server",
         (SafewordLocation::Server , Ok(false))                       => "The safeword was already disabledin this server",
-        (SafewordLocation::Server , Ok(true ))                       => "Disabled the safeword in this server",
+        (SafewordLocation::Server , Ok(true ))                       => "Disabled the safeword in this server.\nNote that any gags applied before or during this safeword (and all other relevant safewords) now apply again",
         (SafewordLocation::Server , Err(SafewordError::NotInServer)) => "Can't disable a per-server safeword outside of a server",
         (SafewordLocation::Channel, Ok(false))                       => "The safeword was already disabledin this channel",
-        (SafewordLocation::Channel, Ok(true ))                       => "Disabled the safeword in this channel",
+        (SafewordLocation::Channel, Ok(true ))                       => "Disabled the safeword in this channel.\nNote that any gags applied before or during this safeword (and all other relevant safewords) now apply again",
         (SafewordLocation::Channel, Err(SafewordError::NotInServer)) => "Can't disable a per-server safeword outside of a server"
     }).await?;
 

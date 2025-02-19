@@ -7,10 +7,28 @@ pub struct Config {
     pub gaggees: HashMap<UserId, Gaggee>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum MessageAction {
+    Gag,
+    WarnTooLong(usize),
+    Nothing
+}
+
 impl Config {
     /// Returns [`true`] if a message should be gagged.
-    pub fn should_gag(&self, msg: &Message) -> bool {
-        self.gaggees.get(&msg.author.id).is_some_and(|gaggee| !gaggee.safewords.is_safewording(msg.channel_id, msg.guild_id) && gaggee.gags.get(&msg.channel_id).is_some_and(|gag| gag.until.is_forever_or(|until| &msg.timestamp < until)))
+    pub fn should_do(&self, msg: &Message) -> MessageAction {
+        // self.gaggees.get(&msg.author.id).is_some_and(|gaggee| !gaggee.safewords.is_safewording(msg.channel_id, msg.guild_id) && gaggee.gags.get(&msg.channel_id).is_some_and(|gag| gag.until.is_forever_or(|until| &msg.timestamp < until)))
+
+        match self.gaggees.get(&msg.author.id) {
+            Some(gaggee) => match !gaggee.safewords.is_safewording(msg.channel_id, msg.guild_id) && gaggee.gags.get(&msg.channel_id).is_some_and(|gag| gag.until < msg.timestamp) {
+                true => match msg.content.len() < gaggee.max_message_length_to_gag {
+                    true => MessageAction::Gag,
+                    false => MessageAction::WarnTooLong(gaggee.max_message_length_to_gag)
+                },
+                false => MessageAction::Nothing
+            },
+            None => MessageAction::Nothing
+        }
     }
 
     /// Tries to gag `gaggee` using their trust for `member`.

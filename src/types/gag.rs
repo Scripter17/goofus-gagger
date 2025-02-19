@@ -22,16 +22,6 @@ pub enum GagUntil {
     Forever
 }
 
-impl GagUntil {
-    /// Basically [`Option::is_none_or`].
-    pub fn is_forever_or<F: FnOnce(&Timestamp) -> bool>(&self, f: F) -> bool {
-        match self {
-            GagUntil::Time(x) => f(x),
-            GagUntil::Forever => true
-        }
-    }
-}
-
 impl PartialEq<Timestamp> for GagUntil {
     fn eq(&self, other: &Timestamp) -> bool {
         match self {

@@ -5,60 +5,75 @@ use rand::distr::weighted::*;
 use serde::{Serialize, Deserialize};
 use thiserror::Error;
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, poise::macros::ChoiceParameter)]
-pub enum RewriterName {
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize, poise::macros::ChoiceParameter)]
+pub enum GagModeName {
     #[default]
     Gag,
     Dog,
     Cow,
-    Fox
+    Fox,
+    Cat
 }
 
 #[derive(Debug, Error)]
-#[error("Unknwon RewriterName")]
-pub struct UnknownRewriterName;
+#[error("Unknwon GagModeName")]
+pub struct UnknownGagModeName;
 
-impl FromStr for RewriterName {
-    type Err = UnknownRewriterName;
+impl FromStr for GagModeName {
+    type Err = UnknownGagModeName;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
+        match &*s.to_ascii_lowercase() {
             "gag" => Ok(Self::Gag),
             "dog" => Ok(Self::Dog),
             "cow" => Ok(Self::Cow),
             "fox" => Ok(Self::Fox),
-            _ => Err(UnknownRewriterName)
+            "cat" => Ok(Self::Cat),
+            _ => Err(UnknownGagModeName)
         }
     }
 }
 
-impl RewriterName {
-    pub fn get(&self) -> &'static Rewriter {
+impl std::fmt::Display for GagModeName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        f.write_str(match self {
+            Self::Gag => "Gag",
+            Self::Dog => "Dog",
+            Self::Cow => "Cow",
+            Self::Fox => "Fox",
+            Self::Cat => "Cat"
+        })
+    }
+}
+
+impl GagModeName {
+    pub fn get(&self) -> &'static GagMode {
         match self {
             Self::Gag => &GAG_REWRITER,
             Self::Dog => &DOG_REWRITER,
-            Self::Cow => todo!(),
-            Self::Fox => todo!()
+            Self::Cow => &COW_REWRITER,
+            Self::Fox => &FOX_REWRITER,
+            Self::Cat => &CAT_REWRITER
         }
     }
 }
 
 pub const REWRITER_STATES: usize = 16;
 
-pub struct Rewriter {
+pub struct GagMode {
     pub chars: [char; REWRITER_STATES],
     pub first: [u8; REWRITER_STATES],
     pub next: [[u8; REWRITER_STATES]; REWRITER_STATES]
 }
 
 #[derive(Debug, Error)]
-pub enum RewriterError {
+pub enum GagModeError {
     #[error(transparent)]
     WeightError(#[from] rand::seq::WeightError)
 }
 
-impl Rewriter {
-    pub fn rewrite(&self, text: &str) -> Result<String, RewriterError> {
+impl GagMode {
+    pub fn rewrite(&self, text: &str) -> Result<String, GagModeError> {
         let mut ret = String::with_capacity(text.len());
         let mut rng = rand::rng();
         let get_first = WeightedIndex::new(self.first)?;
@@ -76,7 +91,8 @@ impl Rewriter {
     }
 }
 
-pub const EMPTY_REWRITER: Rewriter = Rewriter {
+#[allow(dead_code, reason = "Used for copy pasting")]
+pub const EMPTY_REWRITER: GagMode = GagMode {
     chars: [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
     first: [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
     next: [
@@ -99,7 +115,7 @@ pub const EMPTY_REWRITER: Rewriter = Rewriter {
     ]
 };
 
-pub const GAG_REWRITER: Rewriter = Rewriter {
+pub const GAG_REWRITER: GagMode = GagMode {
     chars: ['h','m','f' , ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
     first: [ 4 , 2 , 1  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
     next: [
@@ -123,7 +139,7 @@ pub const GAG_REWRITER: Rewriter = Rewriter {
     ]
 };
 
-pub const DOG_REWRITER: Rewriter = Rewriter {
+pub const DOG_REWRITER: GagMode = GagMode {
     chars: ['a','w','r','u','f' , 'w','o','f' , 'b','a','r','k','!' , 'a','w','o'],
     first: [ 4 , 2,  2 , 0 , 0  ,  4 , 0 , 0  ,  1 , 0 , 0 , 0 , 0  ,  1 , 0 , 0 ],
     next: [
@@ -146,5 +162,77 @@ pub const DOG_REWRITER: Rewriter = Rewriter {
            [ 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0  ,  1 , 1 , 0 ],
            [ 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0  ,  0 , 1 , 2 ],
            [ 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0  ,  1 , 1 , 4 ]
+    ]
+};
+
+pub const COW_REWRITER: GagMode = GagMode {
+    chars: ['m','o' , ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+    first: [ 1 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+    next: [
+           [ 1 , 1  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 1  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+
+           [ 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ]
+    ]
+};
+
+pub const FOX_REWRITER: GagMode = GagMode {
+    chars: ['a','e','h' , ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+    first: [ 1 , 1 , 1  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+    next: [
+           [ 1 , 1 , 1  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 1 , 1 , 1  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 1 , 1 , 1  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+
+           [ 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ]
+    ]
+};
+
+pub const CAT_REWRITER: GagMode = GagMode {
+    chars: ['m','r','e','o','a','u','w' , ' ',' ',' ',' ',' ',' ',' ',' ',' '],
+    first: [ 4 , 2 , 1 , 0 , 1 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+    next: [
+           [ 1 , 2 , 2 , 1 , 2 , 1 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 1 , 2 , 2 , 2 , 1 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 2 , 2 , 2 , 2 , 1  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 2 , 2 , 2 , 2 , 1  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 2 , 2 , 2 , 2 , 1  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 2 , 2 , 2 , 2 , 1  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 1 , 1 , 1 , 1 , 2  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ]
     ]
 };

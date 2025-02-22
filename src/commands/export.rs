@@ -7,7 +7,9 @@ use crate::types::*;
 pub async fn export(
     ctx: Context<'_, State, serenity::Error>
 ) -> Result<(), serenity::Error> {
-    todo!()
+    ctx.say(serde_json::to_string(&ctx.data().export(ctx.author().id)).expect("Serialization to never fail")).await?;
+
+    Ok(())
 }
 
 /// Import your data
@@ -17,6 +19,15 @@ pub async fn import(
     #[description = "The data to import"]
     data: String
 ) -> Result<(), serenity::Error> {
-    todo!()
-}
+    let import_result = match serde_json::from_str(&data) {
+        Ok(data) => {ctx.data().import(ctx.author().id, data); Ok(())}
+        Err(_) => Err(())
+    };
 
+    ctx.say(match import_result {
+        Ok(()) => "Data imported",
+        Err(()) => "Invalid data"
+    }).await?;
+
+    Ok(())
+}

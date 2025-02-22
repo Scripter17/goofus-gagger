@@ -10,7 +10,7 @@ pub struct Safewords {
     pub channels: HashSet<ChannelId>
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, poise::ChoiceParameter)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, poise::ChoiceParameter)]
 pub enum SafewordLocation {
     Global,
     Server,

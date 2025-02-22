@@ -1,9 +1,6 @@
-use std::cmp::Ordering;
-use std::collections::HashMap;
-
 use serde::{Serialize, Deserialize};
 use serenity::all::Timestamp;
-use serenity::model::id::{GuildId, ChannelId};
+use serenity::model::id::ChannelId;
 
 use crate::types::*;
 
@@ -12,7 +9,7 @@ pub struct NewGag {
     pub channel: ChannelId,
     pub until: Option<Timestamp>,
     pub tie: bool,
-    pub rewriter: RewriterName
+    pub mode: GagModeName
 }
 
 impl From<NewGag> for Gag {
@@ -20,7 +17,7 @@ impl From<NewGag> for Gag {
         Self {
             until: value.until,
             tie: value.tie,
-            rewriter: value.rewriter
+            mode: value.mode
         }
     }
 }
@@ -38,5 +35,5 @@ pub struct Gag {
     /// If [`true`], the [`Gaggee`] can't ungag themself and anyone trying to ungag them needs [`Trust::untie`] consent.
     #[serde(default)]
     pub tie: bool,
-    pub rewriter: RewriterName
+    pub mode: GagModeName
 }

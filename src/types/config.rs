@@ -4,6 +4,6 @@ use crate::types::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MessageAction {
-    Rewrite(RewriterName),
+    Gag(GagModeName),
     WarnTooLong(usize)
 }

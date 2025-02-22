@@ -28,9 +28,9 @@ enum Mode {
         #[arg(long, default_value = "state.json")]
         state: PathBuf
     },
-    TestRewriter {
+    TestGagMode {
         #[arg(long)]
-        rewriter: RewriterName,
+        rewriter: GagModeName,
         text: String,
         #[arg(long)]
         count: u8
@@ -43,12 +43,12 @@ fn gag_handler<'a>(ctx: &'a Context, event: &'a FullEvent, _: poise::FrameworkCo
         if let FullEvent::Message{new_message: msg} = event {
             if let Some(action) = state.get_action(msg) {
                 match action {
-                    MessageAction::Rewrite(rewriter) => {
+                    MessageAction::Gag(mode) => {
                         msg.channel_id.send_message(
                             &ctx.http,
                             CreateMessage::new().allowed_mentions(Default::default()).content(format!("{}: {}",
                                 msg.author,
-                                rewriter.get().rewrite(&msg.content).expect("The rewriter to be valid")
+                                mode.get().rewrite(&msg.content).expect("The rewriter to be valid")
                             ))
                         ).await?;
                         msg.delete(&ctx.http).await?;
@@ -78,7 +78,7 @@ async fn main() {
         Args {mode: Mode::RunBot {state: state_path}} => {
             let state: State = serde_json::from_str(&read_to_string(&state_path).expect("The state file to exist")).expect("The state to be valid");
 
-            STATE_PATH.set(state_path);
+            STATE_PATH.set(state_path).expect("The STATE_PATH static to not have already been set");
 
             let framework = poise::Framework::builder()
                 .options(poise::FrameworkOptions {
@@ -92,7 +92,7 @@ async fn main() {
                     ],
                     event_handler: gag_handler,
                     post_command: move |ctx: poise::Context<'_, State, _>| Box::pin(async move {
-                        OpenOptions::new().write(true)
+                        OpenOptions::new().write(true).truncate(true)
                             .open(STATE_PATH.get().expect("The STATE_PATH to have been set by now"))
                             .expect("The file to be openable")
                             .write_all(serde_json::to_string_pretty(ctx.data()).expect("The state to be serializable").as_bytes())
@@ -116,7 +116,7 @@ async fn main() {
 
             client.start().await.expect("Bot to work");
         },
-        Args {mode: Mode::TestRewriter {rewriter, text, count}} => for _ in 0..count {
+        Args {mode: Mode::TestGagMode {rewriter, text, count}} => for _ in 0..count {
             println!("{:?}", rewriter.get().rewrite(&text));
         }
     }

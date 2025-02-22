@@ -1,5 +1,3 @@
-use crate::util::*;
-
 mod gag;
 pub use gag::*;
 mod trust;
@@ -14,3 +12,5 @@ mod state;
 pub use state::*;
 mod rewriter;
 pub use rewriter::*;
+mod portable;
+pub use portable::*;

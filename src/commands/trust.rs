@@ -28,14 +28,7 @@ pub async fn server(
     #[autocomplete = "poise::builtins::autocomplete_command"]
     untie: Option<bool>
 ) -> Result<(), serenity::Error> {
-    let trust_diff = TrustDiff {gag, ungag, tie, untie};
-
-    let gaggee_id = ctx.author().id;
-    ctx.data().config.write().expect("No panics").gaggees.entry(gaggee_id).or_insert_with(|| Gaggee::default_for(gaggee_id)).set_trust_for_guild(ctx.guild_id().expect("The command to only be invokable in servers"), trust_diff);
-
-    ctx.say(format!("{} overrode this server's trust to {trust_diff:?}", ctx.author())).await?;
-
-    Ok(())
+    todo!()
 }
 
 /// Sets the trust levels for a user in any server.
@@ -58,17 +51,7 @@ pub async fn user(
     #[autocomplete = "poise::builtins::autocomplete_command"]
     untie: Option<bool>
 ) -> Result<(), serenity::Error> {
-    let trust_diff = TrustDiff {gag, ungag, tie, untie};
-
-    let gaggee_id = ctx.author().id;
-    if gaggee_id == user.id {
-        ctx.reply(format!("You can't override your trust for yourself. Your trust for yourself is always {:?}", Trust::for_self())).await?;
-    } else {
-        ctx.data().config.write().expect("No panics").gaggees.entry(gaggee_id).or_insert_with(|| Gaggee::default_for(gaggee_id)).set_trust_for_user(user.id, trust_diff);
-        ctx.reply(format!("{} overrode {user}'s global trust to {trust_diff:?}", ctx.author())).await?;
-    }
-
-    Ok(())
+    todo!()
 }
 
 /// Sets the trust levels for a user in the current server.
@@ -91,15 +74,5 @@ pub async fn member(
     #[autocomplete = "poise::builtins::autocomplete_command"]
     untie: Option<bool>
 ) -> Result<(), serenity::Error> {
-    let trust_diff = TrustDiff {gag, ungag, tie, untie};
-
-    let gaggee_id = ctx.author().id;
-    if gaggee_id == member.user.id {
-        ctx.reply(format!("You can't override your trust for yourself. Your trust for yourself is always {:?}", Trust::for_self())).await?;
-    } else {
-        ctx.data().config.write().expect("No panics").gaggees.entry(gaggee_id).or_insert_with(|| Gaggee::default_for(gaggee_id)).set_trust_for_member(MemberId::from_member(&member), trust_diff);
-        ctx.reply(format!("{} overrode {member}'s trust in this server to {trust_diff:?}", ctx.author())).await?;
-    }
-    
-    Ok(())
+    todo!()
 }

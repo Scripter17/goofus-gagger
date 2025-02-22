@@ -22,44 +22,30 @@ pub async fn gag(
     #[autocomplete = "poise::builtins::autocomplete_command"]
     minutes: Option<u32>,
     #[description = "Optionally \"tie\" the user so they can't ungag themself"]
-    #[autocomplete = "poise::builtins::autocomplete_command"]
-    tie: Option<bool>
+    #[flag]
+    tie: bool,
+    rewriter: Option<RewriterName>
 ) -> Result<(), serenity::Error> {
-    let target = match target {
-        Some(target) => Cow::Owned(target),
-        None => Cow::Borrowed(ctx.author())
+    let target = target.as_ref().unwrap_or(ctx.author());
+    
+    let gag_result = ctx.data().gag(target.id, MemberId::from_invoker(&ctx).expect("The gag command to only be runnable in a guiild"), NewGag {
+        channel: ctx.channel_id(),
+        until: minutes.map(|minutes| Timestamp::from_unix_timestamp(ctx.created_at().unix_timestamp() + minutes as i64 * 60).expect("Current time + u32::MAX minutes to be a valid time")),
+        tie,
+        rewriter: rewriter.unwrap_or_default()
+    });
+
+    let message = match gag_result.map(|()| (minutes, tie)) {
+        Ok((None         , false))     => format!("Gagged {target} in this channel forever"),
+        Ok((None         , true ))     => format!("Gagged and tied {target} in this channel forever"),
+        Ok((Some(minutes), false))     => format!("Gagged {target} in this channel for {minutes} minutes"),
+        Ok((Some(minutes), true ))     => format!("Gagged and tied {target} in this channel for {minutes} minutes"),
+        Err(GagError::NoConsentForGag) => format!("{target} hasn't consented to you gagging them"),
+        Err(GagError::NoConsentForTie) => format!("{target} hasn't consented to you tying them"),
+        Err(GagError::AlreadyGagged)   => format!("{target} was already gagged in this channel")
     };
-    let gagger = MemberId::from_invoker(&ctx).expect("The command to only be invokable in servers");
-    let new_gag = Gag {
-        until: match minutes {
-            Some(x) => GagUntil::Time(Timestamp::from_unix_timestamp(ctx.created_at().unix_timestamp() + x as i64 * 60).expect("A valid time")),
-            None => GagUntil::Forever
-        },
-        tie: tie.unwrap_or(false)
-    };
-
-    let gag_result = ctx.data().config.write().expect("No panics").gag(target.id, gagger, ctx.channel_id(), new_gag);
-
-    ctx.say(match gag_result {
-        Ok(()) => {
-            let action = if tie.unwrap_or(false) {"Gagged and tied"} else {"Gagged"};
-            let time = match minutes {
-                None => "forever".to_string(),
-                Some(1) => "for 1 minute".to_string(),
-                Some(x) => format!("for {x} minutes")
-            };
-            let additional = if ctx.data().config.read().expect("No panics").gaggees.get(&target.id).is_some_and(|gaggee| gaggee.safewords.is_safewording(ctx.channel_id(), ctx.guild_id())) {
-                "\nNote that they have a safeword active. The gag will only take effect when they disable the relevant safewords"
-            } else {
-                ""
-            };
-
-            format!("{action} {target} {time}{additional}")
-        },
-        Err(GagError::AlreadyGagged) => format!("{target} was already gagged"),
-        Err(GagError::CantGag)       => format!("{target} hasn't consented to you gagging them"),
-        Err(GagError::CantTie)       => format!("{target} hasn't consented to you tying them")
-    }).await?;
+    
+    ctx.say(message).await?;
 
     Ok(())
 }
@@ -76,22 +62,19 @@ pub async fn ungag(
     #[autocomplete = "poise::builtins::autocomplete_command"]
     target: Option<User>
 ) -> Result<(), serenity::Error> {
-    let target = match target {
-        Some(target) => Cow::Owned(target),
-        None => Cow::Borrowed(ctx.author())
+    let target = target.as_ref().unwrap_or(ctx.author());
+
+    let ungag_result = ctx.data().ungag(target.id, MemberId::from_invoker(&ctx).expect("The ungag command to only be runnable in a guild"), NewUngag {channel: ctx.channel_id()});
+
+    let message = match ungag_result {
+        Ok(()) => format!("Ungagged {target} in this channel"),
+        Err(UngagError::NoConsentForUngag) => format!("{target} hasn't consented to you ungagging them"),
+        Err(UngagError::NoConsentForUntie) => format!("{target} hasn't consented to you untying them"),
+        Err(UngagError::CantUntieYourself) => format!("You can't untie yourself"),
+        Err(UngagError::WasntGagged) => format!("{target} wasn't gagged in this channel")
     };
-    let ungagger = MemberId::from_invoker(&ctx).expect("The command to only be invokable in servers");
 
-    let ungag_result = ctx.data().config.write().expect("No panics").ungag(target.id, ungagger, ctx.channel_id());
-
-    ctx.say(match ungag_result {
-        Ok(()) => format!("Ungagged {target} here"),
-        Err(UngagError::WasntGagged)       => format!("{target} wasn't gagged"),
-        Err(UngagError::CantUngag)         => format!("{target} hasn't consented to you ungagging them"),
-        Err(UngagError::CantUntie)         => format!("{target} hasn't consented to you untying them"),
-        Err(UngagError::CantUntieYourself) => "You can't untie yourself (use /trust to let someone else do it)".to_string()
-    }).await?;
+    ctx.say(message).await?;
 
     Ok(())
 }
-

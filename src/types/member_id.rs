@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use serde::{Serialize, Deserialize, ser::Serializer, de::{Deserializer, Visitor}};
+use serenity::model::{guild::Member, id::{UserId, GuildId}};
 
 use crate::types::*;
 

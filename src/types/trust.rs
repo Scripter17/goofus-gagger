@@ -79,7 +79,7 @@ impl TrustDiff {
         if let Some(x) = self.ungag {to.ungag = x;}
         if let Some(x) = self.tie   {to.tie   = x;}
         if let Some(x) = self.untie {to.untie = x;}
-        for mode in &self.allow_gag_modes    {to.gag_modes.remove( mode);}
-        for mode in &self.disallow_gag_modes {to.gag_modes.insert(*mode);}
+        for mode in &self.allow_gag_modes    {to.gag_modes.insert(*mode);}
+        for mode in &self.disallow_gag_modes {to.gag_modes.remove( mode);}
     }
 }

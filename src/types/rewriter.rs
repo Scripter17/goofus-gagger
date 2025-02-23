@@ -21,34 +21,38 @@ pub enum GagModeName {
     /// Makes you sound like a fox.
     Fox,
     /// Makes you sound like a cat.
-    Cat
+    Cat,
+    /// Makes you sound like a seal.
+    Seal
 }
 
 impl GagModeName {
     /// A [`HashSet`] with all [`GagModeName`]s.
     pub fn all() -> HashSet<Self> {
-        [Self::Gag, Self::Dog, Self::Cow, Self::Fox, Self::Cat].into()
+        [Self::Gag, Self::Dog, Self::Cow, Self::Fox, Self::Cat, Self::Seal].into()
     }
 
     /// The icon of a [`GagModeName`]. Usually an emoji.
     pub fn icon(&self) -> &'static str {
         match self {
-            Self::Gag => "🔴",
-            Self::Dog => "🐶",
-            Self::Cow => "🐮",
-            Self::Fox => "🦊",
-            Self::Cat => "🐱"
+            Self::Gag  => "🔴",
+            Self::Dog  => "🐶",
+            Self::Cow  => "🐮",
+            Self::Fox  => "🦊",
+            Self::Cat  => "🐱",
+            Self::Seal => "🦭" 
         }
     }
 
     /// Gets the [`GagMode`].
     pub fn get(&self) -> &'static GagMode {
         match self {
-            Self::Gag => &GAG_GAGMODE,
-            Self::Dog => &DOG_GAGMODE,
-            Self::Cow => &COW_GAGMODE,
-            Self::Fox => &FOX_GAGMODE,
-            Self::Cat => &CAT_GAGMODE
+            Self::Gag  => &GAG_GAGMODE,
+            Self::Dog  => &DOG_GAGMODE,
+            Self::Cow  => &COW_GAGMODE,
+            Self::Fox  => &FOX_GAGMODE,
+            Self::Cat  => &CAT_GAGMODE,
+            Self::Seal => &SEAL_GAGMODE
         }
     }
 }
@@ -63,11 +67,12 @@ impl FromStr for GagModeName {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match &*s.to_ascii_lowercase() {
-            "gag" => Ok(Self::Gag),
-            "dog" => Ok(Self::Dog),
-            "cow" => Ok(Self::Cow),
-            "fox" => Ok(Self::Fox),
-            "cat" => Ok(Self::Cat),
+            "gag"  => Ok(Self::Gag),
+            "dog"  => Ok(Self::Dog),
+            "cow"  => Ok(Self::Cow),
+            "fox"  => Ok(Self::Fox),
+            "cat"  => Ok(Self::Cat),
+            "seal" => Ok(Self::Seal),
             _ => Err(UnknownGagModeName)
         }
     }
@@ -76,11 +81,12 @@ impl FromStr for GagModeName {
 impl std::fmt::Display for GagModeName {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         f.write_str(match self {
-            Self::Gag => "Gag",
-            Self::Dog => "Dog",
-            Self::Cow => "Cow",
-            Self::Fox => "Fox",
-            Self::Cat => "Cat"
+            Self::Gag  => "Gag",
+            Self::Dog  => "Dog",
+            Self::Cow  => "Cow",
+            Self::Fox  => "Fox",
+            Self::Cat  => "Cat",
+            Self::Seal => "Seal"
         })
     }
 }
@@ -277,5 +283,30 @@ pub const CAT_GAGMODE: GagMode = GagMode {
            [ 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
            [ 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
            [ 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ]
+    ]
+};
+
+/// [`GagModeName::Seal`]
+pub const SEAL_GAGMODE: GagMode = GagMode {
+    chars: ['g','i','h','p','b','e','a','f' , ' ',' ',' ',' ',' ',' ',' ',' '],
+    first: [ 1 , 1 , 1 , 1 , 1 , 1 , 1 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+    next: [
+           [ 1 , 1 , 1 , 0 , 0 , 4 , 2 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 1 , 2 , 2 , 1 , 2 , 1 , 1 , 1  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 1 , 1 , 1 , 2 , 1 , 0 , 0 , 2  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 1 , 4 , 0 , 1 , 0 , 0 , 2  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 1 , 1 , 0 , 1 , 1 , 0 , 2  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 2 , 1 , 1 , 0 , 0 , 0 , 2 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 1 , 2 , 2 , 1 , 1 , 1 , 0 , 4  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ]
     ]
 };

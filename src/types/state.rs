@@ -30,7 +30,7 @@ pub enum GagError {
     /// Tried to tie someone without their consent.
     NoConsentForTie,
     /// Tried to gag someone in a mode they haven't consented to.
-    NoConsentForMode(GagModeName),
+    NoConsentForMode,
     /// Tried to gag someone who was already gagged.
     AlreadyGagged
 }
@@ -78,7 +78,7 @@ impl State {
                         Entry::Vacant(e) => {e.insert(new_gag.into());}
                     }
                 } else {
-                    Err(GagError::NoConsentForMode(new_gag.mode))?
+                    Err(GagError::NoConsentForMode)?
                 }
             } else {
                 Err(GagError::NoConsentForTie)?

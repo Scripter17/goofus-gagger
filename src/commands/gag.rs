@@ -29,24 +29,26 @@ pub async fn gag(
     mode: Option<GagModeName>
 ) -> Result<(), serenity::Error> {
     let target = target.as_ref().unwrap_or(ctx.author());
+
+    let mode = mode.unwrap_or_default();
     
     let gag_result = ctx.data().gag(target.id, MemberId::from_invoker(&ctx).expect("The gag command to only be runnable in a guiild"), NewGag {
         channel: ctx.channel_id(),
         #[allow(clippy::arithmetic_side_effects, reason = "I don't think it can happen.")]
         until: minutes.map(|minutes| Timestamp::from_unix_timestamp(ctx.created_at().unix_timestamp() + minutes as i64 * 60).expect("Current time + u32::MAX minutes to be a valid time")),
         tie,
-        mode: mode.unwrap_or_default()
+        mode
     });
 
     let message = match gag_result.map(|()| (minutes, tie)) {
-        Ok((None         , false))            => format!("Gagged {target} in this channel with mode {} forever", mode.unwrap_or_default()),
-        Ok((None         , true ))            => format!("Gagged and tied {target} in this channel with mode {} forever", mode.unwrap_or_default()),
-        Ok((Some(minutes), false))            => format!("Gagged {target} in this channel with mode {} for {minutes} minutes", mode.unwrap_or_default()),
-        Ok((Some(minutes), true ))            => format!("Gagged and tied {target} in this channel with mode {} for {minutes} minutes", mode.unwrap_or_default()),
-        Err(GagError::NoConsentForGag)        => format!("{target} hasn't consented to you gagging them"),
-        Err(GagError::NoConsentForTie)        => format!("{target} hasn't consented to you tying them"),
-        Err(GagError::NoConsentForMode(mode)) => format!("{target} has consented to you gagging them but not with mode {mode}"),
-        Err(GagError::AlreadyGagged)          => format!("{target} was already gagged in this channel")
+        Ok((None         , false))      => format!("Gagged {target} in this channel with mode {mode} ({}) forever"                       , mode.icon()),
+        Ok((None         , true ))      => format!("Gagged and tied {target} in this channel with mode {mode} ({}) forever"              , mode.icon()),
+        Ok((Some(minutes), false))      => format!("Gagged {target} in this channel with mode {mode} ({}) for {minutes} minutes"         , mode.icon()),
+        Ok((Some(minutes), true ))      => format!("Gagged and tied {target} in this channel with mode {mode} ({}) for {minutes} minutes", mode.icon()),
+        Err(GagError::NoConsentForGag)  => format!("{target} hasn't consented to you gagging them"),
+        Err(GagError::NoConsentForTie)  => format!("{target} hasn't consented to you tying them"),
+        Err(GagError::NoConsentForMode) => format!("{target} has consented to you gagging them but not with mode {mode} ({})", mode.icon()),
+        Err(GagError::AlreadyGagged)    => format!("{target} was already gagged in this channel")
     };
 
     ctx.say(message).await?;
@@ -74,7 +76,7 @@ pub async fn ungag(
         Ok(()) => format!("Ungagged {target} in this channel"),
         Err(UngagError::NoConsentForUngag)      => format!("{target} hasn't consented to you ungagging them"),
         Err(UngagError::NoConsentForUntie)      => format!("{target} hasn't consented to you untying them"),
-        Err(UngagError::NoConsentForMode(mode)) => format!("{target} has consented to you ungagging them but not with mode {mode}"),
+        Err(UngagError::NoConsentForMode(mode)) => format!("{target} has consented to you ungagging them but not with mode {mode} ({})", mode.icon()),
         Err(UngagError::CantUntieYourself)      =>         "You can't untie yourself".to_string(),
         Err(UngagError::WasntGagged)            => format!("{target} wasn't gagged in this channel")
     };

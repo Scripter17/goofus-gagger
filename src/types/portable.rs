@@ -5,7 +5,7 @@ use serenity::model::id::ChannelId;
 
 use crate::types::*;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PortableGaggee {
     pub trusts: Option<GaggeeTrust>,
     pub gags: Option<HashMap<ChannelId, Gag>>,

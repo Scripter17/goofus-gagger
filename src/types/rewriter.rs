@@ -18,7 +18,7 @@ pub enum GagModeName {
 
 impl GagModeName {
     pub fn all() -> HashSet<Self> {
-        [Self::Gag, Self::Dog, Self::Cow, Self::Fox, Self::Cat].into_iter().collect()
+        [Self::Gag, Self::Dog, Self::Cow, Self::Fox, Self::Cat].into()
     }
 }
 

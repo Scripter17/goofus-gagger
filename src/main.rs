@@ -87,7 +87,7 @@ async fn main() {
                         commands::struggle(),
                         commands::trust(),
                         commands::safeword(), commands::unsafeword(),
-                        commands::export(), commands::import(),
+                        commands::export(), commands::import(), commands::wipe_my_data(),
                         commands::status(),
                         commands::set_max_message_length_to_gag()
                     ],

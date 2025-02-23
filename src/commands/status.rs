@@ -19,7 +19,7 @@ pub async fn status(
             .filter(|gag| gag.until.is_none_or(|until| ctx.created_at() <= until));
 
         match gag {
-            Some(gag) => format!("{target} has the following gag applied in this channel: {}", serde_json::to_string(gag).expect("Serialization to never fail")),
+            Some(gag) => format!("{target} has the following gag applied in this channel: `{}`", serde_json::to_string(gag).expect("Serialization to never fail")),
             None => format!("{target} doesn't have a gag applied in this channel")
         }
     };

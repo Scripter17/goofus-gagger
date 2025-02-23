@@ -79,11 +79,22 @@ pub async fn user(
 
     let serialized = serde_json::to_string(&diff).expect("Serialization to never fail");
     let overwrote = ctx.data().trusts.write().expect("No panics").entry(ctx.author().id).or_default().per_user.insert(user.id, diff).is_some();
-    let sum = serde_json::to_string(&ctx.data().trust_for(ctx.author().id, MemberId::from_invoker(&ctx).expect("The /trust member command to only be invokable in servers"))).expect("Serialization to never fail");
+    let sum = ctx.data().trust_for(ctx.author().id, MemberId::from_invoker(&ctx).expect("The /trust member command to only be invokable in servers"));
+    let sum_message = serde_json::to_string(&sum).expect("Serialization to never fail");
+    let additional = if sum.gag_modes.is_empty() {
+        match (sum.gag, sum.ungag) {
+            (false, false) => "".to_string(),
+            (false, true ) => format!("\nNote that while {user} technically has ungag permission, you haven't allowed them any gag modes they can ungag\nTo do so, specify the `allow_gag_modes` parameter with a comma separated list of gag modes"),
+            (true , false) => format!("\nNote that while {user} technically has gag permission, you haven't allowed them any gag modes they can gag\nTo do so, specify the `allow_gag_modes` parameter with a comma separated list of gag modes"),
+            (true , true ) => format!("\nNote that while {user} technically has gag and ungag permissions, you haven't allowed them any gag modes they can gag or ungag\nTo do so, specify the `allow_gag_modes` parameter with a comma separated list of gag modes")
+        }
+    } else {
+        "".to_string()
+    };
 
     ctx.say(match overwrote {
-        true  => format!("Overwrote {user}'s global trust with `{serialized}`\n{user}'s final trust level in this server is now `{sum}`"),
-        false => format!("Set {user}'s global trust to `{serialized}`\n{user}'s final trust level in this server is now `{sum}`")
+        true  => format!("Overwrote {user}'s global trust with `{serialized}`\n{user}'s final trust level in this server is now `{sum_message}`{additional}"),
+        false => format!("Set {user}'s global trust to `{serialized}`\n{user}'s final trust level in this server is now `{sum_message}`{additional}")
     }).await?;
 
     Ok(())
@@ -118,11 +129,22 @@ pub async fn member(
 
     let serialized = serde_json::to_string(&diff).expect("Serialization to never fail");
     let overwrote = ctx.data().trusts.write().expect("No panics").entry(ctx.author().id).or_default().per_member.insert(MemberId::from_member(&member), diff).is_some();
-    let sum = serde_json::to_string(&ctx.data().trust_for(ctx.author().id, MemberId::from_invoker(&ctx).expect("The /trust member command to only be invokable in servers"))).expect("Serialization to never fail");
+    let sum = ctx.data().trust_for(ctx.author().id, MemberId::from_invoker(&ctx).expect("The /trust member command to only be invokable in servers"));
+    let sum_message = serde_json::to_string(&sum).expect("Serialization to never fail");
+    let additional = if sum.gag_modes.is_empty() {
+        match (sum.gag, sum.ungag) {
+            (false, false) => "".to_string(),
+            (false, true ) => format!("\nNote that while {member} technically has ungag permission, you haven't allowed them any gag modes they can ungag\nTo do so, specify the `allow_gag_modes` parameter with a comma separated list of gag modes"),
+            (true , false) => format!("\nNote that while {member} technically has gag permission, you haven't allowed them any gag modes they can gag\nTo do so, specify the `allow_gag_modes` parameter with a comma separated list of gag modes"),
+            (true , true ) => format!("\nNote that while {member} technically has gag and ungag permissions, you haven't allowed them any gag modes they can gag or ungag\nTo do so, specify the `allow_gag_modes` parameter with a comma separated list of gag modes")
+        }
+    } else {
+        "".to_string()
+    };
 
     ctx.say(match overwrote {
-        true  => format!("Overwrote {member}'s trust in this server with `{serialized}`\n{member}'s final trust level in this server is now `{sum}`"),
-        false => format!("Set {member}'s trust in this server to `{serialized}`\n{member}'s final trust level in this server is now `{sum}`")
+        true  => format!("Overwrote {member}'s trust in this server with `{serialized}`\n{member}'s final trust level in this server is now `{sum_message}`{additional}`"),
+        false => format!("Set {member}'s trust in this server to `{serialized}`\n{member}'s final trust level in this server is now `{sum_message}`{additional}")
     }).await?;
 
     Ok(())

@@ -7,7 +7,7 @@ use serenity::model::{guild::Member, user::User};
 use crate::types::*;
 
 /// Sets the trust levels for the current server, a user, or a member.
-#[poise::command(track_edits, slash_command, subcommands("server", "user", "member"))]
+#[poise::command(track_edits, slash_command, subcommands("server", "user", "member", "query"))]
 pub async fn trust(
     _ctx: Context<'_, State, serenity::Error>
 ) -> Result<(), serenity::Error> {
@@ -71,6 +71,11 @@ pub async fn user(
     #[autocomplete = "crate::util::csv_gag_mode_name_autocomplete"]
     disallow_gag_modes: Option<String>
 ) -> Result<(), serenity::Error> {
+    if ctx.author().id == user.id {
+        ctx.say("You can't overwrite your trust for yourself. You can always do anything to yourself except for untying").await?;
+        return Ok(());
+    }
+
     let diff = TrustDiff {
         gag, ungag, tie, untie,
         allow_gag_modes   : allow_gag_modes   .map(|x| x.split(',').map(FromStr::from_str).collect::<Result<HashSet<_>, _>>().expect("All gag mode names to be valid")).unwrap_or_default(),
@@ -79,7 +84,7 @@ pub async fn user(
 
     let serialized = serde_json::to_string(&diff).expect("Serialization to never fail");
     let overwrote = ctx.data().trusts.write().expect("No panics").entry(ctx.author().id).or_default().per_user.insert(user.id, diff).is_some();
-    let sum = ctx.data().trust_for(ctx.author().id, MemberId::from_invoker(&ctx).expect("The /trust member command to only be invokable in servers"));
+    let sum = ctx.data().trust_for(ctx.author().id, MemberId {user: user.id, guild: ctx.guild_id().expect("The /trust member command to only be invokable in servers")});
     let sum_message = serde_json::to_string(&sum).expect("Serialization to never fail");
     let additional = if sum.gag_modes.is_empty() {
         match (sum.gag, sum.ungag) {
@@ -93,8 +98,8 @@ pub async fn user(
     };
 
     ctx.say(match overwrote {
-        true  => format!("Overwrote {user}'s global trust with `{serialized}`\n{user}'s final trust level in this server is now `{sum_message}`{additional}"),
-        false => format!("Set {user}'s global trust to `{serialized}`\n{user}'s final trust level in this server is now `{sum_message}`{additional}")
+        true  => format!("Overwrote your global trust for {user} with `{serialized}`\nYour sum trust for {user} in this server is now `{sum_message}`{additional}"),
+        false => format!("Set your global trust for {user} to `{serialized}`\nYour sum trust for {user} in this server is now `{sum_message}`{additional}")
     }).await?;
 
     Ok(())
@@ -121,6 +126,11 @@ pub async fn member(
     #[autocomplete = "crate::util::csv_gag_mode_name_autocomplete"]
     disallow_gag_modes: Option<String>
 ) -> Result<(), serenity::Error> {
+    if ctx.author().id == member.user.id {
+        ctx.say("You can't overwrite your trust for yourself. You can always do anything to yourself except for untying").await?;
+        return Ok(());
+    }
+
     let diff = TrustDiff {
         gag, ungag, tie, untie,
         allow_gag_modes   : allow_gag_modes   .map(|x| x.split(',').map(FromStr::from_str).collect::<Result<HashSet<_>, _>>().expect("All gag mode names to be valid")).unwrap_or_default(),
@@ -129,7 +139,7 @@ pub async fn member(
 
     let serialized = serde_json::to_string(&diff).expect("Serialization to never fail");
     let overwrote = ctx.data().trusts.write().expect("No panics").entry(ctx.author().id).or_default().per_member.insert(MemberId::from_member(&member), diff).is_some();
-    let sum = ctx.data().trust_for(ctx.author().id, MemberId::from_invoker(&ctx).expect("The /trust member command to only be invokable in servers"));
+    let sum = ctx.data().trust_for(ctx.author().id, MemberId::from_member(&member));
     let sum_message = serde_json::to_string(&sum).expect("Serialization to never fail");
     let additional = if sum.gag_modes.is_empty() {
         match (sum.gag, sum.ungag) {
@@ -143,9 +153,19 @@ pub async fn member(
     };
 
     ctx.say(match overwrote {
-        true  => format!("Overwrote {member}'s trust in this server with `{serialized}`\n{member}'s final trust level in this server is now `{sum_message}`{additional}`"),
-        false => format!("Set {member}'s trust in this server to `{serialized}`\n{member}'s final trust level in this server is now `{sum_message}`{additional}")
+        true  => format!("Overwrote your trust for {member} in this server with `{serialized}`\nYour sum trust for {member} in this server is now `{sum_message}`{additional}"),
+        false => format!("Set your trust for {member} in this server to `{serialized}`\nYour sum trust for {member} in this server is now `{sum_message}`{additional}")
     }).await?;
+
+    Ok(())
+}
+
+#[poise::command(track_edits, slash_command, guild_only)]
+pub async fn query(
+    ctx: Context<'_, State, serenity::Error>,
+    member: Member
+) -> Result<(), serenity::Error> {
+    ctx.say(format!("Your trust for {member} in this server is `{}`", serde_json::to_string(&ctx.data().trust_for(ctx.author().id, MemberId::from_member(&member))).expect("Serialization to never fail"))).await?;
 
     Ok(())
 }

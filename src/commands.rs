@@ -10,3 +10,5 @@ mod status;
 pub use status::*;
 mod safety;
 pub use safety::*;
+mod struggle;
+pub use struggle::*;

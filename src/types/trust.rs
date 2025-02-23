@@ -46,7 +46,7 @@ impl Trust {
             ungag: true,
             tie: true,
             untie: false,
-            gag_modes: [GagModeName::Gag, GagModeName::Dog, GagModeName::Cow, GagModeName::Fox, GagModeName::Cat].into()
+            gag_modes: GagModeName::all()
         }
     }
 }

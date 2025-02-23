@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use std::collections::HashSet;
 
 use rand::prelude::*;
 use rand::distr::weighted::*;
@@ -13,6 +14,12 @@ pub enum GagModeName {
     Cow,
     Fox,
     Cat
+}
+
+impl GagModeName {
+    pub fn all() -> HashSet<Self> {
+        [Self::Gag, Self::Dog, Self::Cow, Self::Fox, Self::Cat].into_iter().collect()
+    }
 }
 
 #[derive(Debug, Error)]

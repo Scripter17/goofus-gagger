@@ -34,16 +34,16 @@ pub async fn gag(
     });
 
     let message = match gag_result.map(|()| (minutes, tie)) {
-        Ok((None         , false))            => format!("Gagged {target} in this channel forever"),
-        Ok((None         , true ))            => format!("Gagged and tied {target} in this channel forever"),
-        Ok((Some(minutes), false))            => format!("Gagged {target} in this channel for {minutes} minutes"),
-        Ok((Some(minutes), true ))            => format!("Gagged and tied {target} in this channel for {minutes} minutes"),
+        Ok((None         , false))            => format!("Gagged {target} in this channel with mode {} forever", mode.unwrap_or_default()),
+        Ok((None         , true ))            => format!("Gagged and tied {target} in this channel with mode {} forever", mode.unwrap_or_default()),
+        Ok((Some(minutes), false))            => format!("Gagged {target} in this channel with mode {} for {minutes} minutes", mode.unwrap_or_default()),
+        Ok((Some(minutes), true ))            => format!("Gagged and tied {target} in this channel with mode {} for {minutes} minutes", mode.unwrap_or_default()),
         Err(GagError::NoConsentForGag)        => format!("{target} hasn't consented to you gagging them"),
         Err(GagError::NoConsentForTie)        => format!("{target} hasn't consented to you tying them"),
         Err(GagError::NoConsentForMode(mode)) => format!("{target} has consented to you gagging them but not with mode {mode}"),
         Err(GagError::AlreadyGagged)          => format!("{target} was already gagged in this channel")
     };
-    
+
     ctx.say(message).await?;
 
     Ok(())

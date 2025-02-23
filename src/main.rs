@@ -46,8 +46,9 @@ fn gag_handler<'a>(ctx: &'a Context, event: &'a FullEvent, _: poise::FrameworkCo
                     MessageAction::Gag(mode) => {
                         msg.channel_id.send_message(
                             &ctx.http,
-                            CreateMessage::new().allowed_mentions(Default::default()).content(format!("{}: {}",
+                            CreateMessage::new().allowed_mentions(Default::default()).content(format!("{} ({}): {}",
                                 msg.author,
+                                mode.icon(),
                                 mode.get().rewrite(&msg.content).expect("The rewriter to be valid")
                             ))
                         ).await?;
@@ -83,7 +84,7 @@ async fn main() {
             let framework = poise::Framework::builder()
                 .options(poise::FrameworkOptions {
                     commands: vec![
-                        commands::gag(), commands::ungag(),
+                        commands::gag(), commands::ungag(), commands::gagged(),
                         commands::struggle(),
                         commands::trust(),
                         commands::safeword(), commands::unsafeword(),

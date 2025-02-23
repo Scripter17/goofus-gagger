@@ -20,6 +20,16 @@ impl GagModeName {
     pub fn all() -> HashSet<Self> {
         [Self::Gag, Self::Dog, Self::Cow, Self::Fox, Self::Cat].into()
     }
+
+    pub fn icon(&self) -> &'static str {
+        match self {
+            Self::Gag => "🔴",
+            Self::Dog => "🐶",
+            Self::Cow => "🐮",
+            Self::Fox => "🦊",
+            Self::Cat => "🐱"
+        }
+    }
 }
 
 #[derive(Debug, Error)]

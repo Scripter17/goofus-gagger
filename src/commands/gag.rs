@@ -1,5 +1,7 @@
 use poise::structs::Context;
+use poise::CreateReply;
 use serenity::model::{timestamp::Timestamp, user::User};
+use serenity::builder::CreateMessage;
 
 use crate::types::*;
 
@@ -75,6 +77,29 @@ pub async fn ungag(
     };
 
     ctx.say(message).await?;
+
+    Ok(())
+}
+
+/// Send a message with a gag
+#[poise::command(track_edits, slash_command)]
+pub async fn gagged(
+    ctx: Context<'_, State, serenity::Error>,
+    mode: Option<GagModeName>,
+    message: String
+) -> Result<(), serenity::Error> {
+    ctx.channel_id().send_message(
+        ctx.http(),
+        CreateMessage::new()
+            .content(format!("{} ({}): {}", ctx.author(), mode.unwrap_or_default().icon(), mode.unwrap_or_default().get().rewrite(&message).expect("Rewriting to work")))
+            .allowed_mentions(Default::default())
+    ).await?;
+
+    ctx.send(CreateReply {
+        content: Some("For some reason the bot has to send you *something* or it shows an error".to_string()),
+        ephemeral: Some(true),
+        ..Default::default()
+    }).await?;
 
     Ok(())
 }

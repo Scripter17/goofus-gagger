@@ -1,3 +1,5 @@
+//! The code to rewrite/gag messages.
+
 use std::str::FromStr;
 use std::collections::HashSet;
 
@@ -6,21 +8,29 @@ use rand::distr::weighted::*;
 use serde::{Serialize, Deserialize};
 use thiserror::Error;
 
+/// The name of a [`GagMode`].
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize, poise::macros::ChoiceParameter)]
 pub enum GagModeName {
+    /// A gag.
     #[default]
     Gag,
+    /// Makes you sound like a dog.
     Dog,
+    /// Makes you sound like a cow.
     Cow,
+    /// Makes you sound like a fox.
     Fox,
+    /// Makes you sound like a cat.
     Cat
 }
 
 impl GagModeName {
+    /// A [`HashSet`] with all [`GagModeName`]s.
     pub fn all() -> HashSet<Self> {
         [Self::Gag, Self::Dog, Self::Cow, Self::Fox, Self::Cat].into()
     }
 
+    /// The icon of a [`GagModeName`]. Usually an emoji.
     pub fn icon(&self) -> &'static str {
         match self {
             Self::Gag => "🔴",
@@ -30,8 +40,20 @@ impl GagModeName {
             Self::Cat => "🐱"
         }
     }
+
+    /// Gets the [`GagMode`].
+    pub fn get(&self) -> &'static GagMode {
+        match self {
+            Self::Gag => &GAG_GAGMODE,
+            Self::Dog => &DOG_GAGMODE,
+            Self::Cow => &COW_GAGMODE,
+            Self::Fox => &FOX_GAGMODE,
+            Self::Cat => &CAT_GAGMODE
+        }
+    }
 }
 
+/// Unknown [`GagModeName`]
 #[derive(Debug, Error)]
 #[error("Unknwon GagModeName")]
 pub struct UnknownGagModeName;
@@ -63,33 +85,31 @@ impl std::fmt::Display for GagModeName {
     }
 }
 
-impl GagModeName {
-    pub fn get(&self) -> &'static GagMode {
-        match self {
-            Self::Gag => &GAG_REWRITER,
-            Self::Dog => &DOG_REWRITER,
-            Self::Cow => &COW_REWRITER,
-            Self::Fox => &FOX_REWRITER,
-            Self::Cat => &CAT_REWRITER
-        }
-    }
-}
+/// The number of states a [`GagMode`] markov chain can have.
+pub const GAGMODE_STATES: usize = 16;
 
-pub const REWRITER_STATES: usize = 16;
-
+/// A markov chain-based gag mode to rewrite messages.
 pub struct GagMode {
-    pub chars: [char; REWRITER_STATES],
-    pub first: [u8; REWRITER_STATES],
-    pub next: [[u8; REWRITER_STATES]; REWRITER_STATES]
+    /// The character to output for each state.
+    pub chars: [char; GAGMODE_STATES],
+    /// The weights of each state to start each word with.
+    pub first: [u8; GAGMODE_STATES],
+    /// The weights of each next state.
+    ///
+    /// `weight_for_next_state = x[current_state][possible_next_state]`.
+    pub next: [[u8; GAGMODE_STATES]; GAGMODE_STATES]
 }
 
+/// The enum of errors [`GagMode::rewrite`] can return.
 #[derive(Debug, Error)]
 pub enum GagModeError {
+    /// Tried to give [`rand`] invalid weights.
     #[error(transparent)]
     WeightError(#[from] rand::seq::WeightError)
 }
 
 impl GagMode {
+    /// Rewrite a message.
     pub fn rewrite(&self, text: &str) -> Result<String, GagModeError> {
         let mut ret = String::with_capacity(text.len());
         let mut rng = rand::rng();
@@ -108,8 +128,9 @@ impl GagMode {
     }
 }
 
+/// The empty [`GagMode`]. Used for copy-pasting.
 #[allow(dead_code, reason = "Used for copy pasting")]
-pub const EMPTY_REWRITER: GagMode = GagMode {
+pub const EMPTY_GAGMODE: GagMode = GagMode {
     chars: [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
     first: [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
     next: [
@@ -132,7 +153,8 @@ pub const EMPTY_REWRITER: GagMode = GagMode {
     ]
 };
 
-pub const GAG_REWRITER: GagMode = GagMode {
+/// [`GagModeName::Gag`].
+pub const GAG_GAGMODE: GagMode = GagMode {
     chars: ['h','m','f' , ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
     first: [ 4 , 2 , 1  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
     next: [
@@ -156,7 +178,8 @@ pub const GAG_REWRITER: GagMode = GagMode {
     ]
 };
 
-pub const DOG_REWRITER: GagMode = GagMode {
+/// [`GagModeName::Dog`]
+pub const DOG_GAGMODE: GagMode = GagMode {
     chars: ['a','w','r','u','f' , 'w','o','f' , 'b','a','r','k','!' , 'a','w','o'],
     first: [ 4 , 2,  2 , 0 , 0  ,  4 , 0 , 0  ,  1 , 0 , 0 , 0 , 0  ,  1 , 0 , 0 ],
     next: [
@@ -182,7 +205,8 @@ pub const DOG_REWRITER: GagMode = GagMode {
     ]
 };
 
-pub const COW_REWRITER: GagMode = GagMode {
+/// [`GagModeName::Cow`]
+pub const COW_GAGMODE: GagMode = GagMode {
     chars: ['m','o' , ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
     first: [ 1 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
     next: [
@@ -206,7 +230,8 @@ pub const COW_REWRITER: GagMode = GagMode {
     ]
 };
 
-pub const FOX_REWRITER: GagMode = GagMode {
+/// [`GagModename::Fox`]
+pub const FOX_GAGMODE: GagMode = GagMode {
     chars: ['a','e','h' , ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
     first: [ 1 , 1 , 1  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
     next: [
@@ -230,7 +255,8 @@ pub const FOX_REWRITER: GagMode = GagMode {
     ]
 };
 
-pub const CAT_REWRITER: GagMode = GagMode {
+/// [`GagModeName::Cat`]
+pub const CAT_GAGMODE: GagMode = GagMode {
     chars: ['m','r','e','o','a','u','w' , ' ',' ',' ',' ',' ',' ',' ',' ',' '],
     first: [ 4 , 2 , 1 , 0 , 1 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
     next: [

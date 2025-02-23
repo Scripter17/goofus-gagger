@@ -1,3 +1,5 @@
+//! Setting [`Trust`] levels.
+
 use std::str::FromStr;
 use std::collections::HashSet;
 

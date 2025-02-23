@@ -1,3 +1,5 @@
+//! Applying, removing, and one-time-using [`Gag`]s.
+
 use poise::structs::Context;
 use poise::CreateReply;
 use serenity::model::{timestamp::Timestamp, user::User};
@@ -30,6 +32,7 @@ pub async fn gag(
     
     let gag_result = ctx.data().gag(target.id, MemberId::from_invoker(&ctx).expect("The gag command to only be runnable in a guiild"), NewGag {
         channel: ctx.channel_id(),
+        #[allow(clippy::arithmetic_side_effects, reason = "I don't think it can happen.")]
         until: minutes.map(|minutes| Timestamp::from_unix_timestamp(ctx.created_at().unix_timestamp() + minutes as i64 * 60).expect("Current time + u32::MAX minutes to be a valid time")),
         tie,
         mode: mode.unwrap_or_default()

@@ -1,3 +1,5 @@
+//! Goofus Gagger is a discord bot that lets you gag your friends.
+
 use std::fs::read_to_string;
 use std::path::PathBuf;
 use std::fs::OpenOptions;
@@ -18,20 +20,27 @@ use types::*;
 
 #[derive(Parser)]
 pub struct Args {
+    /// The thing to do/
     #[command(subcommand)]
     mode: Mode
 }
 
 #[derive(Subcommand)]
 enum Mode {
+    /// Run the bot
     RunBot {
+        /// The path of the state.json file.
         #[arg(long, default_value = "state.json")]
         state: PathBuf
     },
+    /// Test a gag mode.
     TestGagMode {
+        /// The gag mode to test.
         #[arg(long)]
-        rewriter: GagModeName,
+        gag_mode: GagModeName,
+        /// The text to test it with.
         text: String,
+        /// The amount of times to test it.
         #[arg(long)]
         count: u8
     }
@@ -49,7 +58,7 @@ fn gag_handler<'a>(ctx: &'a Context, event: &'a FullEvent, _: poise::FrameworkCo
                             CreateMessage::new().allowed_mentions(Default::default()).content(format!("{} ({}): {}",
                                 msg.author,
                                 mode.icon(),
-                                mode.get().rewrite(&msg.content).expect("The rewriter to be valid")
+                                mode.get().rewrite(&msg.content).expect("The GagMode to be valid")
                             ))
                         ).await?;
                         msg.delete(&ctx.http).await?;
@@ -71,6 +80,7 @@ fn gag_handler<'a>(ctx: &'a Context, event: &'a FullEvent, _: poise::FrameworkCo
     })
 }
 
+/// Because [`FrameworkOptions::post_command`] takes a function pointer, [`Mode::RunBot::state`] has to be stored somewhere a function pointer can reach.
 static STATE_PATH: OnceLock<PathBuf> = OnceLock::new();
 
 #[tokio::main]
@@ -118,8 +128,8 @@ async fn main() {
 
             client.start().await.expect("Bot to work");
         },
-        Args {mode: Mode::TestGagMode {rewriter, text, count}} => for _ in 0..count {
-            println!("{:?}", rewriter.get().rewrite(&text));
+        Args {mode: Mode::TestGagMode {gag_mode, text, count}} => for _ in 0..count {
+            println!("{:?}", gag_mode.get().rewrite(&text));
         }
     }
 }

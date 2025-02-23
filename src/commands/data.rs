@@ -1,3 +1,5 @@
+//! Export, import, and wipe user data.
+
 use poise::structs::Context;
 
 use crate::types::*;

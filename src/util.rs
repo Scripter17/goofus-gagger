@@ -1,9 +1,13 @@
+//! Common and generic utility stuff.
+
 use std::str::FromStr;
 
 use crate::types::*;
 
+/// Returns [`true`] if `x` is [`T::default`].
 pub fn is_default<T: Default + Eq>(x: &T) -> bool {x == &T::default()}
 
+/// Returns auto-...continuations?... for a comma separated list of [`GagModeName`]s.
 pub async fn csv_gag_mode_name_autocomplete<'a>(_: poise::Context<'_, crate::types::State, serenity::Error>, value: &'a str) -> Box<dyn Iterator<Item = String> + 'a + Send> {
     let mut rets = GagModeName::all();
     for x in value.split(',') {if let Ok(x) = FromStr::from_str(x) {rets.remove(&x);}}

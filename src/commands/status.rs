@@ -1,3 +1,5 @@
+//! Getting the state of a user in a channel.
+
 use poise::structs::Context;
 use serenity::model::user::User;
 

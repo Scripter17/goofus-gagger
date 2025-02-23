@@ -1,3 +1,5 @@
+//! Lets you RP struggling against the ropes.
+
 use poise::structs::Context;
 use rand::prelude::*;
 

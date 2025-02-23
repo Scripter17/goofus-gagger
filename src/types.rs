@@ -1,3 +1,5 @@
+//! Types for modeling the bot's state.
+
 mod gag;
 pub use gag::*;
 mod trust;

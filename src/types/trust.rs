@@ -1,3 +1,5 @@
+//! [`GaggeeTrust`] is a state of the art consent system to allow only consentual gagging.
+
 use std::collections::{HashMap, HashSet};
 
 use serde::{Serialize, Deserialize};
@@ -35,11 +37,15 @@ pub struct Trust {
     /// Can untie.
     #[serde(default, skip_serializing_if = "is_default")]
     pub untie: bool,
+    /// Can gag/ungag for these [`GagMode`]s.
     #[serde(default, skip_serializing_if = "is_default")]
     pub gag_modes: HashSet<GagModeName>
 }
 
 impl Trust {
+    /// Get your trust levels for yourself.
+    ///
+    /// Always everything except untying.
     pub fn for_self() -> Self {
         Self {
             gag: true,
@@ -66,8 +72,10 @@ pub struct TrustDiff {
     /// If [`Some`], overwrites [`Trusr::untie`].
     #[serde(default, skip_serializing_if = "is_default")]
     pub untie: Option<bool>,
+    /// Adds a [`GagMode`] to the allow list.
     #[serde(default, skip_serializing_if = "is_default")]
     pub allow_gag_modes: HashSet<GagModeName>,
+    /// Removes a [`GagMode`] from the allow list.
     #[serde(default, skip_serializing_if = "is_default")]
     pub disallow_gag_modes: HashSet<GagModeName>
 }

@@ -1,3 +1,5 @@
+//! Enabling and disabling parts of the [`Safeword`] system.
+
 use poise::structs::Context;
 
 use crate::types::*;

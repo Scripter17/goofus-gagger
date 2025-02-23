@@ -1,3 +1,5 @@
+//! The slash commands.
+
 mod safeword;
 pub use safeword::*;
 mod gag;

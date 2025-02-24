@@ -6,6 +6,7 @@ use std::collections::hash_map::Entry;
 
 use serde::{Serialize, Deserialize};
 use serenity::model::{channel::Message, id::{UserId, ChannelId}};
+use thiserror::Error;
 
 use crate::types::*;
 
@@ -13,40 +14,56 @@ use crate::types::*;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct State {
     /// The [`GaggeeTrust`] for each user.
+    #[serde(default)]
     pub trusts: RwLock<HashMap<UserId, GaggeeTrust>>,
     /// The [`Gag`]s for each user.
+    #[serde(default)]
     pub gags: RwLock<HashMap<UserId, HashMap<ChannelId, Gag>>>,
     /// The length of a message to gag for each user.
+    #[serde(default)]
     pub max_msg_lengths: RwLock<HashMap<UserId, usize>>,
     /// The [`Safewords`]s for each user.
-    pub safewords: RwLock<HashMap<UserId, Safewords>>
+    #[serde(default)]
+    pub safewords: RwLock<HashMap<UserId, Safewords>>,
+    /// Default values for a [`Gag`].
+    #[serde(default)]
+    pub gag_defaults: RwLock<HashMap<UserId, GagDefaults>>
 }
 
 /// The errors that [`State::gag`] can return.
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum GagError {
     /// Tried to gag someone without their consent.
+    #[error("Tried to gag someone without their consent.")]
     NoConsentForGag,
     /// Tried to tie someone without their consent.
+    #[error("Tried to tie someone without their consent.")]
     NoConsentForTie,
     /// Tried to gag someone in a mode they haven't consented to.
+    #[error("Tried to gag someone in a mode they haven't consented to.")]
     NoConsentForMode,
     /// Tried to gag someone who was already gagged.
+    #[error("Tried to gag someone who was already gagged.")]
     AlreadyGagged
 }
 
 /// The errors that [`State::ungag`] can return.
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum UngagError {
     /// Treid to ungag someone without their consent.
+    #[error("Treid to ungag someone without their consent.")]
     NoConsentForUngag,
     /// Tried to untie someone else without their consent.
+    #[error("Tried to untie someone else without their consent.")]
     NoConsentForUntie,
     /// Tried to ungag someone from a mode they haven't consented to you ungagging them from.
+    #[error("Tried to ungag someone from a mode they haven't consented to you ungagging them from.")]
     NoConsentForMode(GagModeName),
     /// Tried to untie yourself.
+    #[error("Tried to untie yourself")]
     CantUntieYourself,
     /// Tried to ungag someone who wasn't gagged.
+    #[error("Tried to ungag someone who wasn't gagged.")]
     WasntGagged
 }
 
@@ -58,7 +75,7 @@ impl State {
         if gag.until.is_none_or(|until| msg.timestamp <= until) && self.safewords.read().expect("No panics").get(&msg.author.id).is_none_or(|safeword| safeword.is_safewording(msg.channel_id, msg.guild_id)) {
             let max_msg_length = self.max_msg_lengths.read().expect("No panics").get(&msg.author.id).copied().unwrap_or(default_max_msg_length());
             if msg.content.len() <= max_msg_length {
-                Some(MessageAction::Gag(gag.mode))
+                Some(MessageAction::Gag(gag.config.mode))
             } else {
                 Some(MessageAction::WarnTooLong(max_msg_length))
             }
@@ -71,8 +88,8 @@ impl State {
     pub fn gag(&self, gaggee: UserId, gagger: MemberId, new_gag: NewGag) -> Result<(), GagError> {
         let trust = self.trust_for(gaggee, gagger);
         if trust.gag {
-            if trust.tie >= new_gag.tie {
-                if trust.gag_modes.contains(&new_gag.mode) {
+            if trust.tie >= new_gag.gag.config.tie {
+                if trust.gag_modes.contains(&new_gag.gag.config.mode) {
                     match self.gags.write().expect("No panics").entry(gaggee).or_default().entry(new_gag.channel) {
                         Entry::Occupied(_) => Err(GagError::AlreadyGagged)?,
                         Entry::Vacant(e) => {e.insert(new_gag.into());}
@@ -96,11 +113,11 @@ impl State {
             let mut lock = self.gags.write().expect("No panics");
             match lock.get_mut(&gaggee) {
                 Some(gags) => match gags.entry(new_ungag.channel) {
-                    Entry::Occupied(gag) => if trust.untie >= gag.get().tie {
-                        if trust.gag_modes.contains(&gag.get().mode) {
+                    Entry::Occupied(gag) => if trust.untie >= gag.get().config.tie {
+                        if trust.gag_modes.contains(&gag.get().config.mode) {
                             gag.remove();
                         } else {
-                            Err(UngagError::NoConsentForMode(gag.get().mode))?
+                            Err(UngagError::NoConsentForMode(gag.get().config.mode))?
                         }
                     } else if gaggee == gagger.user {
                         Err(UngagError::CantUntieYourself)?
@@ -138,7 +155,8 @@ impl State {
             trusts        : self.trusts         .read().expect("No panics").get(&user).cloned(),
             gags          : self.gags           .read().expect("No panics").get(&user).cloned(),
             max_msg_length: self.max_msg_lengths.read().expect("No panics").get(&user).cloned(),
-            safewords     : self.safewords      .read().expect("No panics").get(&user).cloned()
+            safewords     : self.safewords      .read().expect("No panics").get(&user).cloned(),
+            gag_defaults  : self.gag_defaults   .read().expect("No panics").get(&user).cloned()
         }
     }
 
@@ -159,6 +177,10 @@ impl State {
         match data.safewords {
             Some(safewords) => {self.safewords.write().expect("No panics").insert(user, safewords);},
             None            => {self.safewords.write().expect("No panics").remove(&user);}
+        }
+        match data.gag_defaults {
+            Some(gag_defaults) => {self.gag_defaults.write().expect("No panics").insert(user, gag_defaults);},
+            None               => {self.gag_defaults.write().expect("No panics").remove(&user);}
         }
     }
 }

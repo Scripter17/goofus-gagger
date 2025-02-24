@@ -9,7 +9,7 @@ use serenity::model::{guild::Member, user::User};
 use crate::types::*;
 
 /// Sets the trust levels for the current server, a user, or a member.
-#[poise::command(track_edits, slash_command, subcommands("server", "user", "member", "query"))]
+#[poise::command(slash_command, subcommands("server", "user", "member", "query"))]
 pub async fn trust(
     _ctx: Context<'_, State, serenity::Error>
 ) -> Result<(), serenity::Error> {
@@ -17,7 +17,7 @@ pub async fn trust(
 }
 
 /// Sets the trust levels for everyone in the current server.
-#[poise::command(track_edits, slash_command, guild_only)]
+#[poise::command(slash_command, guild_only)]
 pub async fn server(
     ctx: Context<'_, State, serenity::Error>,
     #[description = "Overwrite the entire server's ability to gag you"]
@@ -53,7 +53,7 @@ pub async fn server(
 }
 
 /// Sets the trust levels for a user in any server.
-#[poise::command(track_edits, slash_command, guild_only)]
+#[poise::command(slash_command, guild_only)]
 pub async fn user(
     ctx: Context<'_, State, serenity::Error>,
     #[description = "The member to override trusts for everywhere."]
@@ -108,7 +108,7 @@ pub async fn user(
 }
 
 /// Sets the trust levels for a user in the current server.
-#[poise::command(track_edits, slash_command, guild_only)]
+#[poise::command(slash_command, guild_only)]
 pub async fn member(
     ctx: Context<'_, State, serenity::Error>,
     #[description = "The member to override trusts for in this server."]
@@ -162,7 +162,7 @@ pub async fn member(
     Ok(())
 }
 
-#[poise::command(track_edits, slash_command, guild_only)]
+#[poise::command(slash_command, guild_only)]
 pub async fn query(
     ctx: Context<'_, State, serenity::Error>,
     member: Member

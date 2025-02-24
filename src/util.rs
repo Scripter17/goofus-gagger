@@ -1,6 +1,10 @@
 //! Common and generic utility stuff.
 
 use std::str::FromStr;
+use std::sync::LazyLock;
+
+use regex::Regex;
+use serenity::model::user::User;
 
 use crate::types::*;
 
@@ -25,4 +29,16 @@ pub async fn csv_gag_mode_name_autocomplete<'a>(_: poise::Context<'_, crate::typ
             Box::new(rets2.into_iter())
         }
     }
+}
+
+/// The [`Regex`] of message starts to keep at the start.
+static PREFIXES: LazyLock<Regex> = LazyLock::new(|| Regex::new("^(-#|#{1,3}) ").expect("The PREFIXES regex to be valid"));
+
+/// Convenience function to gag and format a message.
+pub fn to_gagged_message(text: &str, mode: GagModeName, author: &User) -> String {
+    let prefix = PREFIXES.find(text).filter(|x| x.start() == 0).map(|x| x.as_str()).unwrap_or_default();
+    format!("{prefix}{author} ({}): {}",
+        mode.icon(),
+        mode.get().rewrite(text.strip_prefix(prefix).expect("The message to always start with its prefix")).expect("The GagMode to be valid")
+    )
 }

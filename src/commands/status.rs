@@ -5,7 +5,7 @@ use serenity::model::user::User;
 
 use crate::types::*;
 
-#[poise::command(track_edits, slash_command, guild_only)]
+#[poise::command(slash_command, guild_only)]
 pub async fn status(
     ctx: Context<'_, State, serenity::Error>,
     #[description = "Choose the user to get the current gag, tie, and safeword status of. Omit to get your own."]

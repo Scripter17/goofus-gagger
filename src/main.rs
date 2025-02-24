@@ -55,11 +55,7 @@ fn gag_handler<'a>(ctx: &'a Context, event: &'a FullEvent, _: poise::FrameworkCo
                     MessageAction::Gag(mode) => {
                         msg.channel_id.send_message(
                             &ctx.http,
-                            CreateMessage::new().allowed_mentions(Default::default()).content(format!("{} ({}): {}",
-                                msg.author,
-                                mode.icon(),
-                                mode.get().rewrite(&msg.content).expect("The GagMode to be valid")
-                            ))
+                            CreateMessage::new().allowed_mentions(Default::default()).content(util::to_gagged_message(&msg.content, mode, &msg.author))
                         ).await?;
                         msg.delete(&ctx.http).await?;
                     },
@@ -67,7 +63,7 @@ fn gag_handler<'a>(ctx: &'a Context, event: &'a FullEvent, _: poise::FrameworkCo
                         msg.reply(
                             &ctx.http,
                             format!(
-                                "While you  has a gag active here, this message is {} bytes long while the maximum message length to gag is {} bytes\nYou can use `/set_max_message_length_to_gag` to increase this",
+                                "While you have a gag active here, this message is {} bytes long while the maximum message length to gag is {} bytes\nYou can use `/set_max_message_length_to_gag` to increase the limit",
                                 msg.content.len(),
                                 max_length
                             )
@@ -100,7 +96,8 @@ async fn main() {
                         commands::safeword(), commands::unsafeword(),
                         commands::export(), commands::import(), commands::wipe_my_data(),
                         commands::status(),
-                        commands::set_max_message_length_to_gag()
+                        commands::set_max_message_length_to_gag(),
+                        commands::gag_default()
                     ],
                     event_handler: gag_handler,
                     post_command: move |ctx: poise::Context<'_, State, _>| Box::pin(async move {

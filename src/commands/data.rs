@@ -5,7 +5,7 @@ use poise::structs::Context;
 use crate::types::*;
 
 /// Export your data.
-#[poise::command(track_edits, slash_command, dm_only)]
+#[poise::command(slash_command, dm_only)]
 pub async fn export(
     ctx: Context<'_, State, serenity::Error>
 ) -> Result<(), serenity::Error> {
@@ -15,7 +15,7 @@ pub async fn export(
 }
 
 /// Import your data
-#[poise::command(track_edits, slash_command, dm_only)]
+#[poise::command(slash_command, dm_only)]
 pub async fn import(
     ctx: Context<'_, State, serenity::Error>,
     #[description = "The data to import"]
@@ -35,7 +35,7 @@ pub async fn import(
 }
 
 /// Wipe ALL your data from this bot. You should use /export first
-#[poise::command(track_edits, slash_command, dm_only)]
+#[poise::command(slash_command, dm_only)]
 pub async fn wipe_my_data(
     ctx: Context<'_, State, serenity::Error>,
     #[description = "Set to true to actually do the wipe"]

@@ -14,7 +14,7 @@ use crate::types::*;
 /// Requres the user to consent to you gagging (and, if you try to, tying) them using any of the `/trust` commands
 ///
 /// You can always ungag yourself but you can't untie yourself without using `/safeword` or `/export` and `/import`
-#[poise::command(track_edits, slash_command, guild_only)]
+#[poise::command(slash_command, guild_only)]
 pub async fn gag(
     ctx: Context<'_, State, serenity::Error>,
     #[description = "The user to gag. Omit to gag yourself"]
@@ -24,30 +24,36 @@ pub async fn gag(
     #[autocomplete = "poise::builtins::autocomplete_command"]
     minutes: Option<u32>,
     #[description = "Optionally \"tie\" the user so they can't ungag themself"]
-    #[flag]
-    tie: bool,
+    tie: Option<bool>,
     mode: Option<GagModeName>
 ) -> Result<(), serenity::Error> {
     let target = target.as_ref().unwrap_or(ctx.author());
 
-    let mode = mode.unwrap_or_default();
-    
-    let gag_result = ctx.data().gag(target.id, MemberId::from_invoker(&ctx).expect("The gag command to only be runnable in a guiild"), NewGag {
+    let member_id = MemberId::from_invoker(&ctx).expect("The gag command to only be runnable in a guiild");
+
+    let mut gag_config = match ctx.data().gag_defaults.read().expect("No panics").get(&target.id) {
+        Some(x) => x.default_for(member_id),
+        None => Default::default()
+    };
+    GagConfigDiff {tie, mode}.apply(&mut gag_config);
+
+    let gag_result = ctx.data().gag(target.id, member_id, NewGag {
         channel: ctx.channel_id(),
-        #[allow(clippy::arithmetic_side_effects, reason = "I don't think it can happen.")]
-        until: minutes.map(|minutes| Timestamp::from_unix_timestamp(ctx.created_at().unix_timestamp() + minutes as i64 * 60).expect("Current time + u32::MAX minutes to be a valid time")),
-        tie,
-        mode
+        gag: Gag {
+            #[allow(clippy::arithmetic_side_effects, reason = "I don't think it can happen.")]
+            until: minutes.map(|minutes| Timestamp::from_unix_timestamp(ctx.created_at().unix_timestamp() + minutes as i64 * 60).expect("Current time + u32::MAX minutes to be a valid time")),
+            config: gag_config
+        }
     });
 
-    let message = match gag_result.map(|()| (minutes, tie)) {
-        Ok((None         , false))      => format!("Gagged {target} in this channel with mode {mode} ({}) forever"                       , mode.icon()),
-        Ok((None         , true ))      => format!("Gagged and tied {target} in this channel with mode {mode} ({}) forever"              , mode.icon()),
-        Ok((Some(minutes), false))      => format!("Gagged {target} in this channel with mode {mode} ({}) for {minutes} minutes"         , mode.icon()),
-        Ok((Some(minutes), true ))      => format!("Gagged and tied {target} in this channel with mode {mode} ({}) for {minutes} minutes", mode.icon()),
+    let message = match gag_result.map(|()| (minutes, gag_config.tie)) {
+        Ok((None         , false))      => format!("Gagged {target} in this channel with mode {} ({}) forever"                       , gag_config.mode, gag_config.mode.icon()),
+        Ok((None         , true ))      => format!("Gagged and tied {target} in this channel with mode {} ({}) forever"              , gag_config.mode, gag_config.mode.icon()),
+        Ok((Some(minutes), false))      => format!("Gagged {target} in this channel with mode {} ({}) for {minutes} minutes"         , gag_config.mode, gag_config.mode.icon()),
+        Ok((Some(minutes), true ))      => format!("Gagged and tied {target} in this channel with mode {} ({}) for {minutes} minutes", gag_config.mode, gag_config.mode.icon()),
         Err(GagError::NoConsentForGag)  => format!("{target} hasn't consented to you gagging them"),
         Err(GagError::NoConsentForTie)  => format!("{target} hasn't consented to you tying them"),
-        Err(GagError::NoConsentForMode) => format!("{target} has consented to you gagging them but not with mode {mode} ({})", mode.icon()),
+        Err(GagError::NoConsentForMode) => format!("{target} has consented to you gagging them but not with mode {} ({})", gag_config.mode, gag_config.mode.icon()),
         Err(GagError::AlreadyGagged)    => format!("{target} was already gagged in this channel")
     };
 
@@ -61,7 +67,7 @@ pub async fn gag(
 /// Requires the user to consent to you ungagging (and, if they're tied, untying) them using any of the `/trust` commands
 ///
 /// You can always ungag yourself, but you can't untie yourself without using `/safeword` or `/export` and `/import`
-#[poise::command(track_edits, slash_command, guild_only)]
+#[poise::command(slash_command, guild_only)]
 pub async fn ungag(
     ctx: Context<'_, State, serenity::Error>,
     #[description = "The user to ungag. Omit to gag yourself"]
@@ -87,7 +93,7 @@ pub async fn ungag(
 }
 
 /// Send a message with a gag
-#[poise::command(track_edits, slash_command)]
+#[poise::command(slash_command)]
 pub async fn gagged(
     ctx: Context<'_, State, serenity::Error>,
     mode: Option<GagModeName>,
@@ -96,7 +102,7 @@ pub async fn gagged(
     ctx.channel_id().send_message(
         ctx.http(),
         CreateMessage::new()
-            .content(format!("{} ({}): {}", ctx.author(), mode.unwrap_or_default().icon(), mode.unwrap_or_default().get().rewrite(&message).expect("Rewriting to work")))
+            .content(crate::util::to_gagged_message(&message, mode.unwrap_or_default(), ctx.author()))
             .allowed_mentions(Default::default())
     ).await?;
 

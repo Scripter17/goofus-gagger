@@ -11,11 +11,18 @@ use crate::types::*;
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PortableGaggee {
     /// [`State::trusts`].
+    #[serde(default)]
     pub trusts: Option<GaggeeTrust>,
     /// [`State::gags`].
+    #[serde(default)]
     pub gags: Option<HashMap<ChannelId, Gag>>,
     /// [`State::max_msg_lengths`].
+    #[serde(default)]
     pub max_msg_length: Option<usize>,
     /// [`State::safewords`].
-    pub safewords: Option<Safewords>
+    #[serde(default)]
+    pub safewords: Option<Safewords>,
+    /// [`State::gag_defaults`],
+    #[serde(default)]
+    pub gag_defaults: Option<GagDefaults>
 }

@@ -7,9 +7,10 @@ use rand::prelude::*;
 use rand::distr::weighted::*;
 use serde::{Serialize, Deserialize};
 use thiserror::Error;
+use poise::ChoiceParameter;
 
 /// The name of a [`GagMode`].
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize, poise::macros::ChoiceParameter)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize, ChoiceParameter)]
 pub enum GagModeName {
     /// A gag.
     #[default]
@@ -66,28 +67,13 @@ impl FromStr for GagModeName {
     type Err = UnknownGagModeName;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match &*s.to_ascii_lowercase() {
-            "gag"  => Ok(Self::Gag),
-            "dog"  => Ok(Self::Dog),
-            "cow"  => Ok(Self::Cow),
-            "fox"  => Ok(Self::Fox),
-            "cat"  => Ok(Self::Cat),
-            "seal" => Ok(Self::Seal),
-            _ => Err(UnknownGagModeName)
-        }
+        Self::from_name(s).ok_or(UnknownGagModeName)
     }
 }
 
 impl std::fmt::Display for GagModeName {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        f.write_str(match self {
-            Self::Gag  => "Gag",
-            Self::Dog  => "Dog",
-            Self::Cow  => "Cow",
-            Self::Fox  => "Fox",
-            Self::Cat  => "Cat",
-            Self::Seal => "Seal"
-        })
+        f.write_str(self.name())
     }
 }
 

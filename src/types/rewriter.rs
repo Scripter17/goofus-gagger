@@ -15,6 +15,8 @@ pub enum GagModeName {
     /// A gag.
     #[default]
     Gag,
+    /// A sock. Currently identical to [`Self::Gag`].
+    Sock,
     /// Makes you sound like a dog.
     Dog,
     /// Makes you sound like a cow.
@@ -30,13 +32,14 @@ pub enum GagModeName {
 impl GagModeName {
     /// A [`HashSet`] with all [`GagModeName`]s.
     pub fn all() -> HashSet<Self> {
-        [Self::Gag, Self::Dog, Self::Cow, Self::Fox, Self::Cat, Self::Seal].into()
+        Self::list().into_iter().map(|x| Self::from_name(&x.name).expect("ChoiceParameter to be implemented correctly")).collect()
     }
 
     /// The icon of a [`GagModeName`]. Usually an emoji.
     pub fn icon(&self) -> &'static str {
         match self {
             Self::Gag  => "🔴",
+            Self::Sock => "🧦",
             Self::Dog  => "🐶",
             Self::Cow  => "🐮",
             Self::Fox  => "🦊",
@@ -49,6 +52,7 @@ impl GagModeName {
     pub fn get(&self) -> &'static GagMode {
         match self {
             Self::Gag  => &GAG_GAGMODE,
+            Self::Sock => &GAG_GAGMODE,
             Self::Dog  => &DOG_GAGMODE,
             Self::Cow  => &COW_GAGMODE,
             Self::Fox  => &FOX_GAGMODE,

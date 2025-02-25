@@ -99,10 +99,15 @@ pub async fn gagged(
     mode: Option<GagModeName>,
     message: String
 ) -> Result<(), serenity::Error> {
+    let mode = mode.unwrap_or_else(|| match ctx.data().gag_defaults.read().expect("No panics").get(&ctx.author().id) {
+        Some(x) => x.default_for(MemberId::from_invoker(&ctx).expect("The /gagged command to only be invocable in servers")),
+        None => Default::default()
+    }.mode);
+    
     ctx.channel_id().send_message(
         ctx.http(),
         CreateMessage::new()
-            .content(crate::util::to_gagged_message(&message, mode.unwrap_or_default(), ctx.author()))
+            .content(crate::util::to_gagged_message(&message, mode, ctx.author()))
             .allowed_mentions(Default::default())
     ).await?;
 

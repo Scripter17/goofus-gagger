@@ -15,10 +15,12 @@ pub enum GagModeName {
     /// A gag.
     #[default]
     Gag,
-    /// A sock. Currently identical to [`Self::Gag`].
+    /// Makes you sound like [`Self::Gag`].
     Sock,
     /// Makes you sound like a dog.
     Dog,
+    /// Makes you sound like [`Self::Dog`].
+    Puppy,
     /// Makes you sound like a cow.
     Cow,
     /// Makes you sound like a fox.
@@ -26,7 +28,9 @@ pub enum GagModeName {
     /// Makes you sound like a cat.
     Cat,
     /// Makes you sound like a seal.
-    Seal
+    Seal,
+    /// Makes you sound like a bee.
+    Bee
 }
 
 impl GagModeName {
@@ -38,26 +42,30 @@ impl GagModeName {
     /// The icon of a [`GagModeName`]. Usually an emoji.
     pub fn icon(&self) -> &'static str {
         match self {
-            Self::Gag  => "🔴",
-            Self::Sock => "🧦",
-            Self::Dog  => "🐶",
-            Self::Cow  => "🐮",
-            Self::Fox  => "🦊",
-            Self::Cat  => "🐱",
-            Self::Seal => "🦭" 
+            Self::Gag   => "🔴",
+            Self::Sock  => "🧦",
+            Self::Dog   => "🐶",
+            Self::Puppy => "🐶",
+            Self::Cow   => "🐮",
+            Self::Fox   => "🦊",
+            Self::Cat   => "🐱",
+            Self::Seal  => "🦭",
+            Self::Bee   => "🐝"
         }
     }
 
     /// Gets the [`GagMode`].
     pub fn get(&self) -> &'static GagMode {
         match self {
-            Self::Gag  => &GAG_GAGMODE,
-            Self::Sock => &GAG_GAGMODE,
-            Self::Dog  => &DOG_GAGMODE,
-            Self::Cow  => &COW_GAGMODE,
-            Self::Fox  => &FOX_GAGMODE,
-            Self::Cat  => &CAT_GAGMODE,
-            Self::Seal => &SEAL_GAGMODE
+            Self::Gag   => &GAG_GAGMODE,
+            Self::Sock  => &GAG_GAGMODE,
+            Self::Dog   => &DOG_GAGMODE,
+            Self::Puppy => &DOG_GAGMODE,
+            Self::Cow   => &COW_GAGMODE,
+            Self::Fox   => &FOX_GAGMODE,
+            Self::Cat   => &CAT_GAGMODE,
+            Self::Seal  => &SEAL_GAGMODE,
+            Self::Bee   => &BEE_GAGMODE
         }
     }
 }
@@ -298,5 +306,29 @@ pub const SEAL_GAGMODE: GagMode = GagMode {
            [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
            [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
            [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0  ,  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ]
+    ]
+};
+
+/// [`GagModeName::Bee`].
+pub const BEE_GAGMODE: GagMode = GagMode {
+    chars: ['b','u','z',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+    first: [ 4 , 0 , 1 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+    next: [
+           [ 0 , 1 , 1 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 1 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 1 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
+           [ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ]
     ]
 };

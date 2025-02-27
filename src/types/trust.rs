@@ -11,6 +11,9 @@ use crate::util::*;
 /// The trusts a [`Gaggee`] has.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GaggeeTrust {
+    /// The trust the gaggee has in everyone.
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub global: Trust,
     /// the trust the gaggee has in servers.
     #[serde(default, skip_serializing_if = "is_default")]
     pub per_guild: HashMap<GuildId, TrustDiff>,

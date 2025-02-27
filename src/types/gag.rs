@@ -31,6 +31,20 @@ pub struct NewUngag {
     pub channel: ChannelId
 }
 
+/// A new tie.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct NewTie {
+    /// The channel to apply the tie in.
+    pub channel: ChannelId
+}
+
+/// A new untie.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct NewUntie {
+    /// The channel to remove the tie in.
+    pub channel: ChannelId
+}
+
 /// A gag
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Gag {

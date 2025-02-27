@@ -4,6 +4,8 @@ mod safeword;
 pub use safeword::*;
 mod gag;
 pub use gag::*;
+mod tie;
+pub use tie::*;
 mod trust;
 pub use trust::*;
 mod data;

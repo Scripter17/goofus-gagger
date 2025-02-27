@@ -91,6 +91,7 @@ async fn main() {
                 .options(poise::FrameworkOptions {
                     commands: vec![
                         commands::gag(), commands::ungag(), commands::gagged(),
+                        commands::tie(), commands::untie(),
                         commands::struggle(),
                         commands::trust(),
                         commands::safeword(), commands::unsafeword(),

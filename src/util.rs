@@ -2,6 +2,7 @@
 
 use std::str::FromStr;
 use std::sync::LazyLock;
+use std::collections::HashSet;
 
 use regex::Regex;
 use serenity::model::user::User;
@@ -41,4 +42,14 @@ pub fn to_gagged_message(text: &str, mode: GagModeName, author: &User) -> String
         mode.icon(),
         mode.get().rewrite(text.strip_prefix(prefix).expect("The message to always start with its prefix")).expect("The GagMode to be valid")
     )
+}
+
+/// Parses a comma separated list of [`GagModeName`]s into a [`HashSet`]/
+/// # Errors
+/// If a call to [`GagModeName::from_str`] returns an error, the substring that caused the error is returned.
+pub fn parse_csv_gag_modes(modes: Option<&str>) -> Result<HashSet<GagModeName>, &str> {
+    match modes {
+        Some(modes) => modes.split(',').map(|x| GagModeName::from_str(x).map_err(|_| x)).collect(),
+        None => Ok(Default::default())
+    }
 }

@@ -67,7 +67,86 @@ pub enum UngagError {
     WasntGagged
 }
 
+/// The errors [`State::tie`] can return.
+#[derive(Debug, Error)]
+pub enum TieError {
+    /// Tried to tie someone who wasn't gagged.
+    #[error("Tried to tie someone who wasn't gagged.")]
+    WasntGagged,
+    /// Tried to tie someone who was already tied.
+    #[error("Tried to tie someone who was already tied.")]
+    AlreadyTied,
+    /// Tried to tie someone who doesn't consent to you tying them in any gag mode.
+    #[error("Tried to tie someone who doesn't consent to you tying them in any gag mode.")]
+    NoConsentForTie,
+    /// Tried to tie someone who doesn't consent to you tying them in their current gag's mode.
+    #[error("Tried to tie someone who doesn't consent to you tying them in their current gag's mode.")]
+    NoConsentForMode(GagModeName)
+}
+
+/// The errors [`State::untie`] can return.
+#[derive(Debug, Error)]
+pub enum UntieError {
+    /// Tried to untie someone who wasn't gagged.
+    #[error("Tried to untie someone who wasn't gagged.")]
+    WasntGagged,
+    /// Tried to untie someone who wasn't tied.
+    #[error("Tried to untie someone who wasn't tied.")]
+    WasntTied,
+    /// Tried to untie someone who doesn't consent to you untying them in any gag mode.
+    #[error("Tried to untie someone who doesn't consent to you untying them in any gag mode.")]
+    NoConsentForUntie,
+    /// You can't untie yourself.
+    #[error("You can't untie yourself.")]
+    CantUntieYourself,
+    /// Tried to untie someone who doesn't consent to you untying them in their current gag's mode.
+    #[error("Tried to untie someone who doesn't consent to you untying them in their current gag's mode.")]
+    NoConsentForMode(GagModeName)
+}
+
 impl State {
+    /// Tie a gaggee.
+    pub fn tie(&self, gaggee: UserId, gagger: MemberId, new_tie: NewTie) -> Result<(), TieError> {
+        let trust = self.trust_for(gaggee, gagger);
+
+        if !trust.tie {Err(TieError::NoConsentForTie)?}
+
+        let mut lock = self.gags.write().expect("No panics");
+        let gag = lock.get_mut(&gaggee).ok_or(TieError::WasntGagged)?
+            .get_mut(&new_tie.channel).ok_or(TieError::WasntGagged)?;
+
+        if !trust.gag_modes.contains(&gag.config.mode) {Err(TieError::NoConsentForMode(gag.config.mode))?}
+        if gag.config.tie {Err(TieError::AlreadyTied)?}
+
+        gag.config.tie = true;
+
+        Ok(())
+    }
+
+    /// Untie a gaggee.
+    pub fn untie(&self, gaggee: UserId, gagger: MemberId, new_untie: NewUntie) -> Result<(), UntieError> {
+        let trust = self.trust_for(gaggee, gagger);
+
+        if !trust.untie {
+            if gaggee == gagger.user {
+                Err(UntieError::CantUntieYourself)?
+            } else {
+                Err(UntieError::NoConsentForUntie)?
+            }
+        }
+
+        let mut lock = self.gags.write().expect("No panics");
+        let gag = lock.get_mut(&gaggee).ok_or(UntieError::WasntGagged)?
+            .get_mut(&new_untie.channel).ok_or(UntieError::WasntGagged)?;
+
+        if !trust.gag_modes.contains(&gag.config.mode) {Err(UntieError::NoConsentForMode(gag.config.mode))?}
+        if !gag.config.tie {Err(UntieError::WasntTied)?}
+
+        gag.config.tie = false;
+
+        Ok(())
+    }
+
     /// Get the [`MessageAction`] to do for a [`Message`].
     pub fn get_action(&self, msg: &Message) -> Option<MessageAction> {
         let gags_lock = self.gags.read().expect("No panics");
@@ -87,50 +166,41 @@ impl State {
     /// Gag a user.
     pub fn gag(&self, gaggee: UserId, gagger: MemberId, new_gag: NewGag) -> Result<(), GagError> {
         let trust = self.trust_for(gaggee, gagger);
-        if trust.gag {
-            if trust.tie >= new_gag.gag.config.tie {
-                if trust.gag_modes.contains(&new_gag.gag.config.mode) {
-                    match self.gags.write().expect("No panics").entry(gaggee).or_default().entry(new_gag.channel) {
-                        Entry::Occupied(_) => Err(GagError::AlreadyGagged)?,
-                        Entry::Vacant(e) => {e.insert(new_gag.into());}
-                    }
-                } else {
-                    Err(GagError::NoConsentForMode)?
-                }
-            } else {
-                Err(GagError::NoConsentForTie)?
-            }
-        } else {
-            Err(GagError::NoConsentForGag)?
+
+        if !trust.gag {Err(GagError::NoConsentForGag)?}
+        if new_gag.gag.config.tie && !trust.tie  {Err(GagError::NoConsentForTie)?}
+        if !trust.gag_modes.contains(&new_gag.gag.config.mode) {Err(GagError::NoConsentForMode)?}
+
+        match self.gags.write().expect("No panics").entry(gaggee).or_default().entry(new_gag.channel) {
+            Entry::Occupied(_) => Err(GagError::AlreadyGagged)?,
+            Entry::Vacant(e) => {e.insert(new_gag.into());}
         }
+
         Ok(())
     }
 
     /// Ungag a user.
     pub fn ungag(&self, gaggee: UserId, gagger: MemberId, new_ungag: NewUngag) -> Result<(), UngagError> {
         let trust = self.trust_for(gaggee, gagger);
-        if trust.ungag {
-            let mut lock = self.gags.write().expect("No panics");
-            match lock.get_mut(&gaggee) {
-                Some(gags) => match gags.entry(new_ungag.channel) {
-                    Entry::Occupied(gag) => if trust.untie >= gag.get().config.tie {
-                        if trust.gag_modes.contains(&gag.get().config.mode) {
-                            gag.remove();
-                        } else {
-                            Err(UngagError::NoConsentForMode(gag.get().config.mode))?
-                        }
-                    } else if gaggee == gagger.user {
+
+        if !trust.ungag {Err(UngagError::NoConsentForUngag)?}
+
+        match self.gags.write().expect("No panics").get_mut(&gaggee).ok_or(UngagError::WasntGagged)?.entry(new_ungag.channel) {
+            Entry::Occupied(gag) => {
+                if gag.get().config.tie && !trust.untie {
+                    if gaggee == gagger.user {
                         Err(UngagError::CantUntieYourself)?
                     } else {
                         Err(UngagError::NoConsentForUntie)?
-                    },
-                    Entry::Vacant(_) => Err(UngagError::WasntGagged)?
-                },
-                None => Err(UngagError::WasntGagged)?
-            }
-        } else {
-            Err(UngagError::NoConsentForUngag)?
+                    }
+                }
+                if !trust.gag_modes.contains(&gag.get().config.mode) {Err(UngagError::NoConsentForMode(gag.get().config.mode))?}
+
+                gag.remove();
+            },
+            Entry::Vacant(_) => Err(UngagError::WasntGagged)?
         }
+
         Ok(())
     }
 
@@ -138,14 +208,14 @@ impl State {
     pub fn trust_for(&self, gaggee: UserId, gagger: MemberId) -> Trust {
         if gaggee == gagger.user {
             Trust::for_self()
-        } else {
-            let mut ret = Trust::default();
-            if let Some(gaggee_trust) = self.trusts.read().expect("No panics").get(&gaggee) {
-                if let Some(diff) = gaggee_trust.per_guild .get(&gagger.guild) {diff.apply(&mut ret);}
-                if let Some(diff) = gaggee_trust.per_user  .get(&gagger.user ) {diff.apply(&mut ret);}
-                if let Some(diff) = gaggee_trust.per_member.get(&gagger      ) {diff.apply(&mut ret);}
-            }
+        } else if let Some(gaggee_trust) = self.trusts.read().expect("No panics").get(&gaggee) {
+            let mut ret = gaggee_trust.global.clone();
+            if let Some(diff) = gaggee_trust.per_guild .get(&gagger.guild) {diff.apply(&mut ret);}
+            if let Some(diff) = gaggee_trust.per_user  .get(&gagger.user ) {diff.apply(&mut ret);}
+            if let Some(diff) = gaggee_trust.per_member.get(&gagger      ) {diff.apply(&mut ret);}
             ret
+        } else {
+            Default::default()
         }
     }
 
@@ -162,23 +232,25 @@ impl State {
 
     /// Import a user's data.
     pub fn import(&self, user: UserId, data: PortableGaggee) {
-        match data.trusts {
+        let PortableGaggee {trusts, gags, max_msg_length, safewords, gag_defaults} = data;
+        
+        match trusts {
             Some(trusts) => {self.trusts.write().expect("No panics").insert(user, trusts);},
             None         => {self.trusts.write().expect("No panics").remove(&user);}
         }
-        match data.gags {
+        match gags {
             Some(gags) => {self.gags.write().expect("No panics").insert(user, gags);},
             None       => {self.gags.write().expect("No panics").remove(&user);}
         }
-        match data.max_msg_length {
+        match max_msg_length {
             Some(max_msg_length) => {self.max_msg_lengths.write().expect("No panics").insert(user, max_msg_length);},
             None                 => {self.max_msg_lengths.write().expect("No panics").remove(&user);}
         }
-        match data.safewords {
+        match safewords {
             Some(safewords) => {self.safewords.write().expect("No panics").insert(user, safewords);},
             None            => {self.safewords.write().expect("No panics").remove(&user);}
         }
-        match data.gag_defaults {
+        match gag_defaults {
             Some(gag_defaults) => {self.gag_defaults.write().expect("No panics").insert(user, gag_defaults);},
             None               => {self.gag_defaults.write().expect("No panics").remove(&user);}
         }

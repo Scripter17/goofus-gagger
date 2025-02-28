@@ -209,7 +209,11 @@ pub async fn query(
     ctx: Context<'_, State, serenity::Error>,
     member: Member
 ) -> Result<(), serenity::Error> {
-    ctx.say(format!("Your trust for {member} in this server is `{}`", serde_json::to_string(&ctx.data().trust_for(ctx.author().id, MemberId::from_member(&member))).expect("Serialization to never fail"))).await?;
+    ctx.say(format!(
+        "Your trust for {member} in this server is `{}`\n{member}'s trust for you in this server is `{}`",
+        serde_json::to_string(&ctx.data().trust_for(ctx.author().id, MemberId::from_member(&member))).expect("Serialization to never fail"),
+        serde_json::to_string(&ctx.data().trust_for(member.user.id , MemberId::from_invoker(&ctx).expect("The /trust query command to only be invokable in servers"))).expect("Serialization to never fail")
+    )).await?;
 
     Ok(())
 }

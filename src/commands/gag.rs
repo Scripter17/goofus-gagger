@@ -49,6 +49,8 @@ pub async fn gag(
     let message = match gag_result.map(|()| (minutes, gag_config.tie)) {
         Ok((None         , false))      => format!("Gagged {target} in this channel with mode {} ({}) forever"                       , gag_config.mode, gag_config.mode.icon()),
         Ok((None         , true ))      => format!("Gagged and tied {target} in this channel with mode {} ({}) forever"              , gag_config.mode, gag_config.mode.icon()),
+        Ok((Some(1)      , false))      => format!("Gagged {target} in this channel with mode {} ({}) for 1 minute"                  , gag_config.mode, gag_config.mode.icon()),
+        Ok((Some(1)      , true ))      => format!("Gagged and tied {target} in this channel with mode {} ({}) for 1 minute"         , gag_config.mode, gag_config.mode.icon()),
         Ok((Some(minutes), false))      => format!("Gagged {target} in this channel with mode {} ({}) for {minutes} minutes"         , gag_config.mode, gag_config.mode.icon()),
         Ok((Some(minutes), true ))      => format!("Gagged and tied {target} in this channel with mode {} ({}) for {minutes} minutes", gag_config.mode, gag_config.mode.icon()),
         Err(GagError::NoConsentForGag)  => format!("{target} hasn't consented to you gagging them"),

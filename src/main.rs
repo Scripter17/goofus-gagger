@@ -101,7 +101,10 @@ async fn main() {
                         commands::gag_default()
                     ],
                     event_handler: gag_handler,
+                    pre_command: move |ctx: poise::Context<'_, State, _>| Box::pin(async move {ctx.data().cleanup(ctx.created_at());}),
                     post_command: move |ctx: poise::Context<'_, State, _>| Box::pin(async move {
+                        ctx.data().cleanup(ctx.created_at());
+
                         OpenOptions::new().write(true).truncate(true)
                             .open(STATE_PATH.get().expect("The STATE_PATH to have been set by now"))
                             .expect("The file to be openable")

@@ -14,7 +14,7 @@ pub async fn tie(
     let target = target.as_ref().unwrap_or(ctx.author());
 
     let message = match ctx.data().tie(target.id, MemberId::from_invoker(&ctx).expect("The /tie command to only be invocable in servers."), NewTie {channel: ctx.channel_id()}) {
-        Ok(())                                => format!("tied {target}"),
+        Ok(())                                => format!("Tied {target}"),
         Err(TieError::WasntGagged)            => format!("{target} wasn't gagged"),
         Err(TieError::AlreadyTied)            => format!("{target} was already tied"),
         Err(TieError::NoConsentForTie)        => format!("{target} doesn't consent to you tying them"),

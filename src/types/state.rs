@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 
 use serde::{Serialize, Deserialize};
-use serenity::model::{channel::Message, id::{UserId, ChannelId}};
+use serenity::model::{channel::Message, id::{UserId, ChannelId}, timestamp::Timestamp};
 use thiserror::Error;
 
 use crate::types::*;
@@ -105,6 +105,19 @@ pub enum UntieError {
 }
 
 impl State {
+    /// Does cleanup stuff for both privacy and not giving weird answers about expired gags.
+    ///
+    /// Yes this does invalidate the entire point of both using [`RwLock`] and using multiple of them.
+    pub fn cleanup(&self, now: Timestamp) {
+        self.trusts.write().expect("No pancis").retain(|_, x| x != &GaggeeTrust::default());
+        let mut gags_lock = self.gags.write().expect("No panics");
+        for user_gags in gags_lock.values_mut() {user_gags.retain(|_, x| x.until.is_none_or(|until| now < until));}
+        gags_lock.retain(|_, x| x != &HashMap::<_, _>::default());
+        self.max_msg_lengths.write().expect("No panics").retain(|_, x| *x != default_max_msg_length());
+        self.safewords.write().expect("No panics").retain(|_, x| x != &Safewords::default());
+        self.gag_defaults.write().expect("No panics").retain(|_, x| x != &GagDefaults::default());
+    }
+
     /// Tie a gaggee.
     pub fn tie(&self, gaggee: UserId, gagger: MemberId, new_tie: NewTie) -> Result<(), TieError> {
         let trust = self.trust_for(gaggee, gagger);

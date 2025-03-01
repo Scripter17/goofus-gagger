@@ -53,9 +53,13 @@ fn gag_handler<'a>(ctx: &'a Context, event: &'a FullEvent, _: poise::FrameworkCo
             if let Some(action) = state.get_action(msg) {
                 match action {
                     MessageAction::Gag(mode) => {
+                        let mut new_message = CreateMessage::new()
+                            .allowed_mentions(Default::default())
+                            .content(util::to_gagged_message(&msg.content, mode, &msg.author));
+                        if let Some(ref ref_msg) = msg.referenced_message {new_message = new_message.reference_message(&**ref_msg);}
                         msg.channel_id.send_message(
                             &ctx.http,
-                            CreateMessage::new().allowed_mentions(Default::default()).content(util::to_gagged_message(&msg.content, mode, &msg.author))
+                            new_message
                         ).await?;
                         msg.delete(&ctx.http).await?;
                     },

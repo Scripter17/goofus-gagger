@@ -114,7 +114,7 @@ pub async fn gagged(
     ).await?;
 
     ctx.send(CreateReply {
-        content: Some("For some reason the bot has to send you *something* or it shows an error".to_string()),
+        content: Some("For some reason the bot has to send you *something* or it shows an error\nAlso I can't preserve replies in command invocations. No idea why".to_string()),
         ephemeral: Some(true),
         ..Default::default()
     }).await?;

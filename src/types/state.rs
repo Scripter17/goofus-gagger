@@ -162,9 +162,10 @@ impl State {
 
     /// Get the [`MessageAction`] to do for a [`Message`].
     pub fn get_action(&self, msg: &Message) -> Option<MessageAction> {
+        if msg.message_reference.is_some() {return None;}
         let gags_lock = self.gags.read().expect("No panics");
         let gag = gags_lock.get(&msg.author.id)?.get(&msg.channel_id)?;
-        if gag.until.is_none_or(|until| msg.timestamp <= until) && self.safewords.read().expect("No panics").get(&msg.author.id).is_none_or(|safeword| safeword.is_safewording(msg.channel_id, msg.guild_id)) {
+        if gag.until.is_none_or(|until| msg.timestamp <= until) && !self.safewords.read().expect("No panics").get(&msg.author.id).is_some_and(|safeword| safeword.is_safewording(msg.channel_id, msg.guild_id)) {
             let max_msg_length = self.max_msg_lengths.read().expect("No panics").get(&msg.author.id).copied().unwrap_or(default_max_msg_length());
             if msg.content.len() <= max_msg_length {
                 Some(MessageAction::Gag(gag.config.mode))

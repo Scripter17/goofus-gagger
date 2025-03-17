@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 
 use serde::{Serialize, Deserialize};
-use serenity::model::{channel::Message, id::{UserId, ChannelId}, timestamp::Timestamp};
+use serenity::model::{channel::{Message, MessageReference, MessageReferenceKind}, id::{UserId, ChannelId}, timestamp::Timestamp};
 use thiserror::Error;
 
 use crate::types::*;
@@ -162,7 +162,7 @@ impl State {
 
     /// Get the [`MessageAction`] to do for a [`Message`].
     pub fn get_action(&self, msg: &Message) -> Option<MessageAction> {
-        if msg.message_reference.is_some() {return None;}
+        if matches!(msg.message_reference, Some(MessageReference {kind: MessageReferenceKind::Forward, ..})) {return None;}
         let gags_lock = self.gags.read().expect("No panics");
         let gag = gags_lock.get(&msg.author.id)?.get(&msg.channel_id)?;
         if gag.until.is_none_or(|until| msg.timestamp <= until) && !self.safewords.read().expect("No panics").get(&msg.author.id).is_some_and(|safeword| safeword.is_safewording(msg.channel_id, msg.guild_id)) {

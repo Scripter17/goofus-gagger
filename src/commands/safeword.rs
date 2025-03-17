@@ -15,19 +15,29 @@ pub async fn safeword(
     #[description = "Where to apply the safeword for"]
     r#where: SafewordLocation
 ) -> Result<(), serenity::Error> {
-    let safeword_result = ctx.data().safewords.write().expect("No panics").entry(ctx.author().id).or_default().add_safeword(r#where, ctx.channel_id(), ctx.guild_id());
+    let (safeword_result, relevant_safewords) = {
+        let mut safeword_lock = ctx.data().safewords.write().expect("No panics");
+        let safewords = safeword_lock.entry(ctx.author().id).or_default();
+        let safeword_result = safewords.add_safeword(r#where, ctx.channel_id(), ctx.guild_id());
+        let relevant_safewords = safewords.get_relevant_safewords(ctx.channel_id(), ctx.guild_id());
 
-    ctx.say(match (r#where, safeword_result) {
-        (SafewordLocation::Global , Ok (true)                      ) => "Enabled the global safeword. Note that when all relevant safewords are disabled, gags will once again apply",
+        (safeword_result, relevant_safewords)
+    };
+
+    let mut message = match (r#where, safeword_result) {
+        (SafewordLocation::Global , Ok (true)                      ) => "Enabled the global safeword",
         (SafewordLocation::Global , Ok (false)                     ) => "The global safeword was already enabled",
         (SafewordLocation::Global , Err(SafewordError::NotInServer)) => unreachable!(),
-        (SafewordLocation::Server , Ok (true)                      ) => "Enabled the safeword for this server. Note that when all relevant safewords are disabled, gags will once again apply",
+        (SafewordLocation::Server , Ok (true)                      ) => "Enabled the safeword for this server",
         (SafewordLocation::Server , Ok (false)                     ) => "The safeword for this server was already enabled",
         (SafewordLocation::Server , Err(SafewordError::NotInServer)) => "You can't enable the per-server safeword when not in a server",
-        (SafewordLocation::Channel, Ok (true)                      ) => "Enabled the safeword for this channel. Note that when all relevant safewords are disabled, gags will oncea again apply",
+        (SafewordLocation::Channel, Ok (true)                      ) => "Enabled the safeword for this channel",
         (SafewordLocation::Channel, Ok (false)                     ) => "The safeword for this channel was already enabled",
         (SafewordLocation::Channel, Err(SafewordError::NotInServer)) => unreachable!()
-    }).await?;
+    }.to_string();
+    message.push_str(&format!("\nYou now have the following relevant safewords enabled: {relevant_safewords:?}"));
+
+    ctx.say(message).await?;
 
     Ok(())
 }
@@ -39,22 +49,32 @@ pub async fn unsafeword(
     #[description = "Where to revoke the safeword for"]
     r#where: SafewordLocation
 ) -> Result<(), serenity::Error> {
-    let unsafeword_result = match ctx.data().safewords.write().expect("No panics").get_mut(&ctx.author().id) {
-        Some(safeword) => safeword.remove_safeword(r#where, ctx.channel_id(), ctx.guild_id()),
-        None => Ok(false)
+    let (unsafeword_result, relevant_safewords) = {
+        let mut safeword_lock = ctx.data().safewords.write().expect("No panics");
+        let safewords = safeword_lock.entry(ctx.author().id).or_default();
+        let unsafeword_result = safewords.remove_safeword(r#where, ctx.channel_id(), ctx.guild_id());
+        let relevant_safewords = safewords.get_relevant_safewords(ctx.channel_id(), ctx.guild_id());
+
+        (unsafeword_result, relevant_safewords)
     };
 
-    ctx.say(match (r#where, unsafeword_result) {
-        (SafewordLocation::Global , Ok (true)                      ) => "Disabled the global safeword. Note that when all relevant safewords are disabled, gags will once again apply",
+    let mut message = match (r#where, unsafeword_result) {
+        (SafewordLocation::Global , Ok (true)                      ) => "Disabled the global safeword",
         (SafewordLocation::Global , Ok (false)                     ) => "The global safeword was already disabled",
         (SafewordLocation::Global , Err(SafewordError::NotInServer)) => unreachable!(),
-        (SafewordLocation::Server , Ok (true)                      ) => "Disabled the safeword for this server. Note that when all relevant safewords are disabled, gags will once again apply",
+        (SafewordLocation::Server , Ok (true)                      ) => "Disabled the safeword for this server",
         (SafewordLocation::Server , Ok (false)                     ) => "The safeword for this server was already disabled",
         (SafewordLocation::Server , Err(SafewordError::NotInServer)) => "You can't disable the per-server safeword when not in a server",
-        (SafewordLocation::Channel, Ok (true)                      ) => "Disabled the safeword for this channel. Note that when all relevant safewords are disabled, gags will oncea again apply",
+        (SafewordLocation::Channel, Ok (true)                      ) => "Disabled the safeword for this channel",
         (SafewordLocation::Channel, Ok (false)                     ) => "The safeword for this channel was already disabled",
         (SafewordLocation::Channel, Err(SafewordError::NotInServer)) => unreachable!()
-    }).await?;
+    }.to_string();
+
+    if !relevant_safewords.is_empty() {
+        message.push_str(&format!("\nYou still have the following relevant safewords active: {relevant_safewords:?}"));
+    }
+
+    ctx.say(message).await?;
 
     Ok(())
 }

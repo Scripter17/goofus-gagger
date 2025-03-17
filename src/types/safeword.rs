@@ -56,6 +56,17 @@ impl Safewords {
         })
     }
 
+    /// Get the relevant safewords.
+    ///
+    /// Used by the `/status` command.
+    pub fn get_relevant_safewords(&self, channel: ChannelId, server: Option<GuildId>) -> Vec<SafewordLocation> {
+        let mut ret = Vec::new();
+        if self.global {ret.push(SafewordLocation::Global);}
+        if server.is_some_and(|server| self.servers.contains(&server)) {ret.push(SafewordLocation::Global);}
+        if self.channels.contains(&channel) {ret.push(SafewordLocation::Channel);}
+        ret
+    }
+
     /// Checks if a channel is being safeworded.
     ///
     /// Let's see you include the server in that description with the proper hypothetical branch handling.

@@ -20,10 +20,17 @@ pub async fn status(
             .and_then(|gags| gags.get(&ctx.channel_id()))
             .filter(|gag| gag.until.is_none_or(|until| ctx.created_at() <= until));
 
-        match gag {
+        let mut message = match gag {
             Some(gag) => format!("{target} has the following gag applied in this channel: `{}`", serde_json::to_string(gag).expect("Serialization to never fail")),
             None => format!("{target} doesn't have a gag applied in this channel")
+        };
+        if let Some(safewords) = ctx.data().safewords.read().expect("No panics").get(&target.id) {
+            let locations = safewords.get_relevant_safewords(ctx.channel_id(), ctx.guild_id());
+            if !locations.is_empty() {
+                message.push_str(&format!("\n{target} has the following relevant safewords enabled: {locations:?}"));
+            }
         }
+        message
     };
 
     ctx.say(message).await?;

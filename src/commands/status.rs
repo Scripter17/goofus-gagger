@@ -8,7 +8,7 @@ use crate::types::*;
 #[poise::command(slash_command, guild_only)]
 pub async fn status(
     ctx: Context<'_, State, serenity::Error>,
-    #[description = "Choose the user to get the current gag, tie, and safeword status of. Omit to get your own."]
+    #[description = "The user to get the status of. Omit to get your own"]
     #[autocomplete = "poise::builtins::autocomplete_command"]
     target: Option<User>
 ) -> Result<(), serenity::Error> {

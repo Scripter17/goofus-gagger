@@ -17,7 +17,9 @@ pub async fn gag_default(
 #[poise::command(slash_command)]
 pub async fn global(
     ctx: Context<'_, State, serenity::Error>,
+    #[description = "The gag to use"]
     mode: Option<GagModeName>,
+    #[description = "If true, stops you from ungagging yourself"]
     tie: Option<bool>
 ) -> Result<(), serenity::Error> {
     let new_diff = GagConfigDiff {mode, tie};
@@ -29,11 +31,13 @@ pub async fn global(
     Ok(())
 }
 
-/// Set the per-server default values for gags.
+/// Set the per-server default values for gags
 #[poise::command(slash_command, guild_only)]
 pub async fn server(
     ctx: Context<'_, State, serenity::Error>,
+    #[description = "The gag to use"]
     mode: Option<GagModeName>,
+    #[description = "If true, stop the gaggee from ungagging themself"]
     tie: Option<bool>
 ) -> Result<(), serenity::Error> {
     let new_diff = GagConfigDiff {mode, tie};
@@ -45,12 +49,15 @@ pub async fn server(
     Ok(())
 }
 
-/// Set the per-user default values for gags.
+/// Set the per-user default values for gags
 #[poise::command(slash_command)]
 pub async fn user(
     ctx: Context<'_, State, serenity::Error>,
+    #[description = "The user to set the default for"]
     user: User,
+    #[description = "The gag to use"]
     mode: Option<GagModeName>,
+    #[description = "If true, stops you from ungagging yourself"]
     tie: Option<bool>
 ) -> Result<(), serenity::Error> {
     let new_diff = GagConfigDiff {mode, tie};
@@ -62,12 +69,15 @@ pub async fn user(
     Ok(())
 }
 
-/// Set the per-member default values for gags.
+/// Set the per-member default values for gags
 #[poise::command(slash_command, guild_only)]
 pub async fn member(
     ctx: Context<'_, State, serenity::Error>,
+    #[description = "The member to set the default for"]
     member: Member,
+    #[description = "The gag to use"]
     mode: Option<GagModeName>,
+    #[description = "If true, stops you from ungagging yourself"]
     tie: Option<bool>
 ) -> Result<(), serenity::Error> {
     let new_diff = GagConfigDiff {mode, tie};

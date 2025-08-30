@@ -6,7 +6,7 @@ use serenity::model::{guild::Member, user::User};
 use crate::types::*;
 use crate::util::*;
 
-/// Sets the trust levels for the current server, a user, or a member.
+/// Sets the trust levels for the current server, a user, or a member
 #[poise::command(slash_command, subcommands("global", "server", "user", "member", "query"))]
 pub async fn trust(
     _ctx: Context<'_, State, serenity::Error>
@@ -14,19 +14,19 @@ pub async fn trust(
     unreachable!()
 }
 
-/// Sets the trust levels for everyone in the current server.
+/// Set trust config for everyone in any server
 #[poise::command(slash_command, guild_only)]
 pub async fn global(
     ctx: Context<'_, State, serenity::Error>,
-    #[description = "Allow everyone to gag you"]
+    #[description = "Trust everyone in any server to gag you"]
     gag: Option<bool>,
-    #[description = "Allow everyone to ungag you"]
+    #[description = "Trust everyone in any server to ungag you"]
     ungag: Option<bool>,
-    #[description = "Allow everyone to tie you"]
+    #[description = "Trust everyone in any server to tie you"]
     tie: Option<bool>,
-    #[description = "Allow everyone to untie you"]
+    #[description = "Trust everyone in any server to untie you"]
     untie: Option<bool>,
-    #[description = "Allow everyone to use these gag modes"]
+    #[description = "Trust everyone in any server to use these gag modes"]
     #[autocomplete = "crate::util::csv_gag_mode_name_autocomplete"]
     gag_modes: Option<String>
 ) -> Result<(), serenity::Error> {
@@ -51,22 +51,22 @@ pub async fn global(
     Ok(())
 }
 
-/// Sets the trust levels for everyone in the current server.
+/// Set trust config for everyone this server
 #[poise::command(slash_command, guild_only)]
 pub async fn server(
     ctx: Context<'_, State, serenity::Error>,
-    #[description = "Overwrite the entire server's ability to gag you"]
+    #[description = "Trust everyone in this server to gag you"]
     gag: Option<bool>,
-    #[description = "Overwrite the entire server's ability to ungag you"]
+    #[description = "Trust everyone in this server to ungag you"]
     ungag: Option<bool>,
-    #[description = "Overwrite the entire server's ability to tie you"]
+    #[description = "Trust everyone in this server to tie you"]
     tie: Option<bool>,
-    #[description = "Overwrite the entire server's ability to untie you"]
+    #[description = "Trust everyone in this server to untie you"]
     untie: Option<bool>,
-    #[description = "Allow the entire server to use these gag modes with you in this server"]
+    #[description = "Allow everyone in this server to use these gag modes"]
     #[autocomplete = "crate::util::csv_gag_mode_name_autocomplete"]
     allow_gag_modes: Option<String>,
-    #[description = "Disallow the entire server from use these gag modes with you in this server"]
+    #[description = "Disallow everyone in this server from using these gag modes"]
     #[autocomplete = "crate::util::csv_gag_mode_name_autocomplete"]
     disallow_gag_modes: Option<String>
 ) -> Result<(), serenity::Error> {
@@ -92,24 +92,24 @@ pub async fn server(
     Ok(())
 }
 
-/// Sets the trust levels for a user in any server.
+/// Set trust config for a user in any server
 #[poise::command(slash_command, guild_only)]
 pub async fn user(
     ctx: Context<'_, State, serenity::Error>,
-    #[description = "The member to override trusts for everywhere."]
+    #[description = "The user to set the trust config for in any server"]
     user: User,
-    #[description = "Overwrite the user's ability to gag you in any server"]
+    #[description = "Trust them to gag you in any server"]
     gag: Option<bool>,
-    #[description = "Overwrite the user's ability to ungag you in any server"]
+    #[description = "Trust them to ungag you in any server"]
     ungag: Option<bool>,
-    #[description = "Overwrite the user's ability to tie you in any server"]
+    #[description = "Trust them to tie you in any server"]
     tie: Option<bool>,
-    #[description = "Overwrite the user's ability to untie you in any server"]
+    #[description = "Trust them to untie you in any server"]
     untie: Option<bool>,
-    #[description = "Allow the user to use these gag modes with you in any server"]
+    #[description = "Allow them to use these gag modes in any server"]
     #[autocomplete = "crate::util::csv_gag_mode_name_autocomplete"]
     allow_gag_modes: Option<String>,
-    #[description = "Disallow the user from use these gag modes with you in any server"]
+    #[description = "Disallow them from using these gag modes in any server"]
     #[autocomplete = "crate::util::csv_gag_mode_name_autocomplete"]
     disallow_gag_modes: Option<String>
 ) -> Result<(), serenity::Error> {
@@ -133,7 +133,7 @@ pub async fn user(
 
             let warning = match (sum.gag_modes.len(), sum.gag || sum.ungag || sum.tie || sum.untie) {
                 (0  , true ) => format!("\nWarning: Your sum trust for {user} has actions but no modes. If this is an error and you don't intend to use other trust layers to manage their gag modes, re-run this command with `allow_gag_modes` set to a comma separated list of gag modes (Example: `Gag,Dog`)"),
-                (1.., false) => format!("\nWarning: Your sum trust for {user} has modes but no actions. If this is an error and you don't intend to use other trust layers to manage their actions, re-run this command with any of `gag`, `ungag`, `tie`, and/or `untie` set to `True`."),
+                (1.., false) => format!("\nWarning: Your sum trust for {user} has modes but no actions. If this is an error and you don't intend to use other trust layers to manage their actions, re-run this command with any of `gag`, `ungag`, `tie`, and/or `untie` set to `True`"),
                 _ => "".to_string()
             };
 
@@ -148,24 +148,24 @@ pub async fn user(
     Ok(())
 }
 
-/// Sets the trust levels for a user in the current server.
+/// Set trust config for a user in this server
 #[poise::command(slash_command, guild_only)]
 pub async fn member(
     ctx: Context<'_, State, serenity::Error>,
-    #[description = "The member to override trusts for in this server."]
+    #[description = "The user to set the trust config for in this server"]
     member: Member,
-    #[description = "Overwrite the user's ability to gag you in this server"]
+    #[description = "Trust them to gag you in this server"]
     gag: Option<bool>,
-    #[description = "Overwrite the user's ability to ungag you in this server"]
+    #[description = "Trust them to ungag you in this server"]
     ungag: Option<bool>,
-    #[description = "Overwrite the user's ability to tie you in this server"]
+    #[description = "Trust them to tie you in this server"]
     tie: Option<bool>,
-    #[description = "Overwrite the user's ability to untie you in this server"]
+    #[description = "Trust them to untie you in this server"]
     untie: Option<bool>,
-    #[description = "Allow the user to use these gag modes with you in this server"]
+    #[description = "Allow them to use these gag modes in this server"]
     #[autocomplete = "crate::util::csv_gag_mode_name_autocomplete"]
     allow_gag_modes: Option<String>,
-    #[description = "Disallow the user from use these gag modes with you in this server"]
+    #[description = "Disallow them from using these gag modes in this server"]
     #[autocomplete = "crate::util::csv_gag_mode_name_autocomplete"]
     disallow_gag_modes: Option<String>
 ) -> Result<(), serenity::Error> {
@@ -189,7 +189,7 @@ pub async fn member(
 
             let warning = match (sum.gag_modes.len(), sum.gag || sum.ungag || sum.tie || sum.untie) {
                 (0  , true ) => format!("\nWarning: Your sum trust for {member} has actions but no modes. If this is an error and you don't intend to use other trust layers to manage their gag modes, re-run this command with `allow_gag_modes` set to a comma separated list of gag modes (Example: `Gag,Dog`)"),
-                (1.., false) => format!("\nWarning: Your sum trust for {member} has modes but no actions. If this is an error and you don't intend to use other trust layers to manage their actions, re-run this command with any of `gag`, `ungag`, `tie`, and/or `untie` set to `True`."),
+                (1.., false) => format!("\nWarning: Your sum trust for {member} has modes but no actions. If this is an error and you don't intend to use other trust layers to manage their actions, re-run this command with any of `gag`, `ungag`, `tie`, and/or `untie` set to `True`"),
                 _ => "".to_string()
             };
 
@@ -204,9 +204,11 @@ pub async fn member(
     Ok(())
 }
 
+/// Get the trusts between you and a user in this server
 #[poise::command(slash_command, guild_only)]
 pub async fn query(
     ctx: Context<'_, State, serenity::Error>,
+    #[description = "The member to get the trust details of and for"]
     member: Member
 ) -> Result<(), serenity::Error> {
     ctx.say(format!(

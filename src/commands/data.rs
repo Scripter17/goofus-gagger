@@ -4,7 +4,7 @@ use poise::structs::Context;
 
 use crate::types::*;
 
-/// Export your data.
+/// Export your data
 #[poise::command(slash_command, dm_only)]
 pub async fn export(
     ctx: Context<'_, State, serenity::Error>

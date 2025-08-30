@@ -5,10 +5,11 @@ use serenity::model::user::User;
 
 use crate::types::*;
 
-/// Tie a gaggee.
+/// Tie a gaggee
 #[poise::command(slash_command, guild_only)]
 pub async fn tie(
     ctx: Context<'_, State, serenity::Error>,
+    #[description = "The gaggee tie"]
     target: Option<User>
 ) -> Result<(), serenity::Error> {
     let target = target.as_ref().unwrap_or(ctx.author());
@@ -26,10 +27,11 @@ pub async fn tie(
     Ok(())
 }
 
-/// Untie a gaggee.
+/// Untie a gaggee, leaving the gag
 #[poise::command(slash_command, guild_only)]
 pub async fn untie(
     ctx: Context<'_, State, serenity::Error>,
+    #[description = "The gaggee to untie"]
     target: Option<User>
 ) -> Result<(), serenity::Error> {
     let target = target.as_ref().unwrap_or(ctx.author());

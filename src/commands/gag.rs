@@ -98,7 +98,9 @@ pub async fn ungag(
 #[poise::command(slash_command)]
 pub async fn gagged(
     ctx: Context<'_, State, serenity::Error>,
+    #[description = "The gag to use"]
     mode: Option<GagModeName>,
+    #[description = "The text to gag"]
     message: String
 ) -> Result<(), serenity::Error> {
     let mode = mode.unwrap_or_else(|| match ctx.data().gag_defaults.read().expect("No panics").get(&ctx.author().id) {

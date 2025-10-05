@@ -9,7 +9,7 @@ use crate::types::*;
 #[poise::command(slash_command, guild_only)]
 pub async fn tie(
     ctx: Context<'_, State, serenity::Error>,
-    #[description = "The gaggee tie"]
+    #[description = "The gaggee to tie"]
     target: Option<User>
 ) -> Result<(), serenity::Error> {
     let target = target.as_ref().unwrap_or(ctx.author());

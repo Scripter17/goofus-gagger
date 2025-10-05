@@ -67,6 +67,20 @@ pub enum UngagError {
     WasntGagged
 }
 
+
+#[derive(Debug, Error)]
+pub enum ChangeGagError {
+    /// Tried to gag someone without their consent.
+    #[error("Tried to gag someone without their consent.")]
+    NoConsentForGag,
+    /// Tried to gag someone in a mode they haven't consented to.
+    #[error("Tried to gag someone in a mode they haven't consented to.")]
+    NoConsentForMode(GagModeName),
+    /// Tried to ungag someone who wasn't gagged.
+    #[error("Tried to ungag someone who wasn't gagged.")]
+    WasntGagged
+}
+
 /// The errors [`State::tie`] can return.
 #[derive(Debug, Error)]
 pub enum TieError {
@@ -216,6 +230,23 @@ impl State {
         }
 
         Ok(())
+    }
+
+    /// Change a gaggee's gag to `mode`.
+    ///
+    /// Returns the old [`GagModeName`].
+    pub fn change_gag(&self, gaggee: UserId, gagger: MemberId, change_gag: ChangeGag) -> Result<GagModeName, ChangeGagError> {
+        let trust = self.trust_for(gaggee, gagger);
+
+        if !trust.gag {Err(ChangeGagError::NoConsentForGag)?;}
+        if !trust.gag_modes.contains(&change_gag.mode) {Err(ChangeGagError::NoConsentForMode(change_gag.mode))?;}
+
+        let old = match self.gags.write().expect("No panics").entry(gaggee).or_default().get_mut(&change_gag.channel) {
+            Some(gag) => {let old = gag.config.mode; gag.config.mode = change_gag.mode; old},
+            None => Err(ChangeGagError::WasntGagged)?
+        };
+
+        Ok(old)
     }
 
     /// Get a user's [`Trust`] for a member.

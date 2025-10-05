@@ -45,6 +45,14 @@ pub struct NewUntie {
     pub channel: ChannelId
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ChangeGag {
+    /// The [`ChannelId`] whose gag to change.
+    pub channel: ChannelId,
+    /// The [`GagModeName`] to change the gag to.
+    pub mode: GagModeName
+}
+
 /// A gag
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Gag {
@@ -62,7 +70,7 @@ pub struct GagConfig {
     /// If [`true`], the [`Gaggee`] can't ungag themself and anyone trying to ungag them needs [`Trust::untie`] consent.
     #[serde(default)]
     pub tie: bool,
-    /// The [`GagMode`] this gag uses.
+    /// The [`GagModeName`] this gag uses.
     pub mode: GagModeName
 }
 

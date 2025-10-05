@@ -49,30 +49,28 @@ enum Mode {
 /// Gag a message if its user has a gag and no safeword active.
 fn gag_handler<'a>(ctx: &'a Context, event: &'a FullEvent, _: poise::FrameworkContext<'a, State, serenity::Error>, state: &'a State) -> BoxFuture<'a, Result<(), serenity::Error>> {
     Box::pin(async move {
-        if let FullEvent::Message{new_message: msg} = event {
-            if let Some(action) = state.get_action(msg) {
-                match action {
-                    MessageAction::Gag(mode) => {
-                        let mut new_message = CreateMessage::new()
-                            .allowed_mentions(Default::default())
-                            .content(util::to_gagged_message(&msg.content, mode, &msg.author));
-                        if let Some(ref ref_msg) = msg.referenced_message {new_message = new_message.reference_message(&**ref_msg);}
-                        msg.channel_id.send_message(
-                            &ctx.http,
-                            new_message
-                        ).await?;
-                        msg.delete(&ctx.http).await?;
-                    },
-                    MessageAction::WarnTooLong(max_length) => {
-                        msg.reply(
-                            &ctx.http,
-                            format!(
-                                "While you have a gag active here, this message is {} bytes long while the maximum message length to gag is {} bytes\nYou can use `/set_max_message_length_to_gag` to increase the limit",
-                                msg.content.len(),
-                                max_length
-                            )
-                        ).await?;
-                    }
+        if let FullEvent::Message{new_message: msg} = event && let Some(action) = state.get_action(msg) {
+            match action {
+                MessageAction::Gag(mode) => {
+                    let mut new_message = CreateMessage::new()
+                        .allowed_mentions(Default::default())
+                        .content(util::to_gagged_message(&msg.content, mode, &msg.author));
+                    if let Some(ref ref_msg) = msg.referenced_message {new_message = new_message.reference_message(&**ref_msg);}
+                    msg.channel_id.send_message(
+                        &ctx.http,
+                        new_message
+                    ).await?;
+                    msg.delete(&ctx.http).await?;
+                },
+                MessageAction::WarnTooLong(max_length) => {
+                    msg.reply(
+                        &ctx.http,
+                        format!(
+                            "While you have a gag active here, this message is {} bytes long while the maximum message length to gag is {} bytes\nYou can use `/set_max_message_length_to_gag` to increase the limit",
+                            msg.content.len(),
+                            max_length
+                        )
+                    ).await?;
                 }
             }
         }
@@ -94,9 +92,9 @@ async fn main() {
             let framework = poise::Framework::builder()
                 .options(poise::FrameworkOptions {
                     commands: vec![
-                        commands::gag(), commands::ungag(), commands::gagged(),
+                        commands::gag(), commands::ungag(), commands::gagged(), commands::change_gag(),
                         commands::tie(), commands::untie(),
-                        commands::struggle(),
+                        commands::struggle(), commands::let_me_out(),
                         commands::trust(),
                         commands::safeword(), commands::unsafeword(),
                         commands::export(), commands::import(), commands::wipe_my_data(),

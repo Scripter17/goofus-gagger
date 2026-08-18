@@ -62,7 +62,7 @@ impl Safewords {
     pub fn get_relevant_safewords(&self, channel: ChannelId, server: Option<GuildId>) -> Vec<SafewordLocation> {
         let mut ret = Vec::new();
         if self.global {ret.push(SafewordLocation::Global);}
-        if server.is_some_and(|server| self.servers.contains(&server)) {ret.push(SafewordLocation::Global);}
+        if server.is_some_and(|server| self.servers.contains(&server)) {ret.push(SafewordLocation::Server);}
         if self.channels.contains(&channel) {ret.push(SafewordLocation::Channel);}
         ret
     }
